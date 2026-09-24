@@ -106,6 +106,12 @@ docAnalisis/analisis-sistema-clima.md, docAnalisis/flujo-ramas.md
 
 ## Pipeline de ramas
 
+### Acuerdos posteriores al arranque
+
+- El usuario confirmó haber visto las pruebas E2E de Fase 1 y dio su VoBo tras la corrida `2026-09-24_1124_5f405f4` (6/6 aprobadas).
+- Hostinger se conectará cuando termine el desarrollo, por decisión del usuario; el primer deploy queda pospuesto.
+- Antes de cada ejecución E2E visible, avisar al usuario. El modo `--headed` usa un solo worker y `slowMo: 1000` para facilitar la revisión visual. La pausa es entre operaciones de Playwright, no una espera fija al final de cada pantalla.
+
 **Preparación (una sola vez; el 2026-09-24 se confirmó que el repo existe y está vacío):**
 1. Volver a correr `gh repo view Octavillt/pronosticoClimaLluvia` justo antes del primer push, para confirmar que sigue vacío.
 2. En `SistemaClima/`, configurar git:

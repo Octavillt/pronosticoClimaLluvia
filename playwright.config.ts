@@ -1,6 +1,10 @@
 import { defineConfig } from '@playwright/test';
 
+const modoVisible = process.argv.includes('--headed');
+
 export default defineConfig({
+  workers: modoVisible ? 1 : undefined,
+  timeout: modoVisible ? 60_000 : 30_000,
   testDir: './e2e',
   outputDir: 'reportes/.tmp/test-results',
   reporter: [
@@ -10,6 +14,7 @@ export default defineConfig({
   ],
   use: {
     baseURL: 'http://localhost:4173',
+    launchOptions: { slowMo: modoVisible ? 1_000 : 0 },
   },
   webServer: {
     command: 'pnpm run build && pnpm run preview -- --port 4173 --strictPort',
