@@ -1,0 +1,6 @@
+node_modules
+dist
+coverage
+reportes/.tmp
+*.local
+.DS_Store

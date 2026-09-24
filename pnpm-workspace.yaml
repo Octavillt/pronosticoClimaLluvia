@@ -1,0 +1,4 @@
+ignoredBuiltDependencies:
+  - msw
+allowBuilds:
+  msw: false

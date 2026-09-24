@@ -1,0 +1,45 @@
+{
+  "name": "sistemaclima",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Probabilidad de lluvia calibrada para México — SPA estática (Vite + React + TS)",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "test:report": "node scripts/run-pruebas.mjs unitarias",
+    "test:e2e": "node scripts/run-pruebas.mjs e2e",
+    "test:e2e:headed": "node scripts/run-pruebas.mjs e2e --headed"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@11.23.0",
+  "pnpm": {
+    "ignoredBuiltDependencies": ["msw"]
+  },
+  "dependencies": {
+    "leaflet": "^1.9.4",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@testing-library/react": "^16.3.3",
+    "@types/leaflet": "^1.9.22",
+    "@types/node": "^26.6.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "@vitest/coverage-v8": "^5.0.1",
+    "fake-indexeddb": "^6.2.5",
+    "jsdom": "^30.1.1",
+    "msw": "^2.15.0",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.1"
+  }
+}
