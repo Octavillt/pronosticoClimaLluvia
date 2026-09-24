@@ -8,4 +8,4 @@ El más reciente primero. Los reportes HTML de Playwright y los JSON intermedios
 
 ## E2E
 
-- (aún no hay)
+- [2026-09-24_1032_a7b063a](e2e/2026-09-24_1032_a7b063a.md)
