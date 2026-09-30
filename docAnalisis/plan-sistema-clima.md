@@ -111,6 +111,11 @@ docAnalisis/analisis-sistema-clima.md, docAnalisis/flujo-ramas.md
 - El usuario confirmó haber visto las pruebas E2E de Fase 1 y dio su VoBo tras la corrida `2026-09-24_1124_5f405f4` (6/6 aprobadas).
 - Hostinger se conectará cuando termine el desarrollo, por decisión del usuario; el primer deploy queda pospuesto.
 - Antes de cada ejecución E2E visible, avisar al usuario. El modo `--headed` usa un solo worker y `slowMo: 1000` para facilitar la revisión visual. La pausa es entre operaciones de Playwright, no una espera fija al final de cada pantalla.
+- **Fase 2 (nowcast con radar), 2026-09-29:** implementada en `develop`. Hallazgos que precisan el plan:
+  - El esquema de color 0 (grises) **no existe** en la API pública: RainViewer sirve solo Universal Blue, así que se decodifica con la tabla de la paleta (análisis §8.1).
+  - La mezcla exigió corregir dos defectos de la Fase 1 en la alineación horaria: "probabilidad ahora" y "próximas horas" ahora parten de la hora en curso (análisis §8.4).
+  - El hindcast con radar real no demuestra mejora sobre la persistencia; la ganancia se medirá en la Fase 3 (análisis §8.6).
+  - VoBo (2026-09-29): el usuario dio su VoBo tras la corrida E2E visible `2026-09-29_2224_054c007` (13/13 aprobadas, con `slowMo` aplicado). Antes se corrigió un defecto de la config de Playwright: los workers no veían `--headed`, así que `slowMo` no se aplicaba (PR #5).
 
 **Preparación (una sola vez; el 2026-09-24 se confirmó que el repo existe y está vacío):**
 1. Volver a correr `gh repo view Octavillt/pronosticoClimaLluvia` justo antes del primer push, para confirmar que sigue vacío.
@@ -144,7 +149,7 @@ docAnalisis/analisis-sistema-clima.md, docAnalisis/flujo-ramas.md
 - En E2E: `bugfix/bug-<descripcion>` desde `testClimateRain`, PR a `testClimateRain` y se vuelve a correr E2E, con back-merge a `develop`.
 - En producción: `hotfix/<descripcion>` desde `master`, PR a `master` (tú lo mergeas) y back-merge a `testClimateRain` y `develop`.
 
-Los commits terminan con `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>` y los PRs con el pie de Claude Code.
+No agregar atribuciones de coautoría a Claude en los commits.
 
 ---
 
