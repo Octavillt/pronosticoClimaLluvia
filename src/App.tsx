@@ -1,22 +1,30 @@
-import { useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { config } from './config';
-import type { GeoPoint, ResultadoPronostico } from './domain/types';
+import type {
+  EstadoRadar,
+  GeoPoint,
+  IndiceRadar,
+  Nowcast,
+  ResultadoPronostico,
+} from './domain/types';
+import { mezclarPop } from './services/blend';
 import { obtenerPronostico } from './services/forecastService';
+import { obtenerNowcast } from './services/nowcastService';
 import { BuscadorCiudad } from './ui/BuscadorCiudad';
 import { EstadoFuentes } from './ui/EstadoFuentes';
 import { LineaDeHoras } from './ui/LineaDeHoras';
 import { ProbabilidadAhora } from './ui/ProbabilidadAhora';
 import { UbicacionActual } from './ui/UbicacionActual';
+import { indiceHoraEnCurso } from './utils/horas';
+
+// Leaflet pesa bastante: solo se descarga cuando hay radar que mostrar.
+const MapaRadar = lazy(() => import('./ui/MapaRadar'));
 
 type Fase = 'solicitando' | 'sin-ubicacion' | 'fuera-mexico' | 'error' | 'listo';
 
-function indiceHoraActual(horasUtc: string[], ahora: Date): number {
-  const truncada = new Date(ahora);
-  truncada.setMinutes(0, 0, 0);
-  const objetivo = truncada.toISOString().slice(0, 16);
-  const indice = horasUtc.findIndex((h) => h.slice(0, 16) >= objetivo);
-  return indice === -1 ? 0 : indice;
-}
+const REFRESCO_RADAR_MS = 5 * 60_000;
+const REFRESCO_RELOJ_MS = 60_000;
+const PESO_RADAR_VISIBLE = 0.05;
 
 export default function App() {
   const [fase, setFase] = useState<Fase>('solicitando');
@@ -26,6 +34,10 @@ export default function App() {
     null,
   );
   const [mensajeError, setMensajeError] = useState<string | null>(null);
+  const [radar, setRadar] = useState<EstadoRadar>({ estado: 'cargando' });
+  const [nowcast, setNowcast] = useState<Nowcast | null>(null);
+  const [indiceRadar, setIndiceRadar] = useState<IndiceRadar | null>(null);
+  const [ahoraMs, setAhoraMs] = useState(() => Date.now());
 
   const cargar = useCallback(async (destino: GeoPoint, nombre: string | null) => {
     setFase('solicitando');
@@ -63,6 +75,79 @@ export default function App() {
     usarGeolocalizacion();
   }, [usarGeolocalizacion]);
 
+  // Reloj: la hora "en curso" avanza sola aunque la pestaña quede abierta.
+  useEffect(() => {
+    const temporizador = setInterval(() => setAhoraMs(Date.now()), REFRESCO_RELOJ_MS);
+    return () => clearInterval(temporizador);
+  }, []);
+
+  // Radar: el ensamble se cachea por corrida del modelo, pero el radar cambia cada 10 min.
+  useEffect(() => {
+    if (fase !== 'listo' || !punto) {
+      return;
+    }
+    let vigente = true;
+    const sinRadar = (estado: EstadoRadar) => {
+      setNowcast(null);
+      setIndiceRadar(null);
+      setRadar(estado);
+    };
+    const consultar = async () => {
+      try {
+        const resultadoRadar = await obtenerNowcast(punto);
+        if (!vigente) {
+          return;
+        }
+        setAhoraMs(Date.now());
+        switch (resultadoRadar.tipo) {
+          case 'ok':
+            setNowcast(resultadoRadar.nowcast);
+            setIndiceRadar(resultadoRadar.indice);
+            setRadar({
+              estado: 'ok',
+              tFrameMs: resultadoRadar.nowcast.tFrameMs,
+              avance: resultadoRadar.nowcast.avance,
+            });
+            break;
+          case 'sin-cobertura':
+            sinRadar({ estado: 'sin-cobertura' });
+            break;
+          case 'desactualizado':
+            sinRadar({ estado: 'desactualizado', edadMin: resultadoRadar.edadMin });
+            break;
+          case 'sin-datos':
+            sinRadar({ estado: 'error', mensaje: resultadoRadar.motivo });
+            break;
+        }
+      } catch (error) {
+        if (vigente) {
+          sinRadar({ estado: 'error', mensaje: error instanceof Error ? error.message : 'Error desconocido' });
+        }
+      }
+    };
+    sinRadar({ estado: 'cargando' });
+    void consultar();
+    const temporizador = setInterval(() => void consultar(), REFRESCO_RADAR_MS);
+    return () => {
+      vigente = false;
+      clearInterval(temporizador);
+    };
+  }, [fase, punto]);
+
+  const mezcla = useMemo(
+    () =>
+      resultado
+        ? mezclarPop({
+            horasUtc: resultado.horasUtc,
+            popEnsamble: resultado.pop,
+            nowcast,
+            ahoraMs,
+          })
+        : null,
+    [resultado, nowcast, ahoraMs],
+  );
+  const horaEnCurso = resultado ? indiceHoraEnCurso(resultado.horasUtc, ahoraMs) : 0;
+
   return (
     <main style={{ fontFamily: 'system-ui, sans-serif', maxWidth: 720, margin: '0 auto', padding: 16 }}>
       <h1>{config.appName}</h1>
@@ -86,7 +171,7 @@ export default function App() {
         </section>
       )}
 
-      {fase === 'listo' && resultado && punto && (
+      {fase === 'listo' && resultado && mezcla && punto && (
         <>
           <UbicacionActual
             punto={punto}
@@ -94,16 +179,32 @@ export default function App() {
             onCambiar={() => setFase('sin-ubicacion')}
           />
           <ProbabilidadAhora
-            pop={resultado.pop[indiceHoraActual(resultado.horasUtc, new Date())]}
-            horaUtc={resultado.horasUtc[indiceHoraActual(resultado.horasUtc, new Date())]}
+            pop={mezcla.pop[horaEnCurso]}
+            horaUtc={resultado.horasUtc[horaEnCurso]}
             timezone={resultado.timezone}
+            conRadar={mezcla.pesoRadar[horaEnCurso] > PESO_RADAR_VISIBLE}
           />
           <LineaDeHoras
             horasUtc={resultado.horasUtc}
-            pop={resultado.pop}
+            pop={mezcla.pop}
+            pesoRadar={mezcla.pesoRadar}
+            desde={horaEnCurso}
             timezone={resultado.timezone}
           />
-          <EstadoFuentes fuentes={resultado.fuentes} />
+          {radar.estado === 'ok' && indiceRadar && (
+            <Suspense fallback={<p role="status">Cargando mapa del radar…</p>}>
+              <MapaRadar
+                punto={punto}
+                nombre={nombreLugar}
+                indice={indiceRadar}
+                timezone={resultado.timezone}
+              />
+            </Suspense>
+          )}
+          <EstadoFuentes fuentes={resultado.fuentes} radar={radar} timezone={resultado.timezone} />
+          <p style={{ fontSize: '0.8rem' }}>
+            Datos: Open-Meteo, radar de RainViewer y mapa © OpenStreetMap.
+          </p>
         </>
       )}
     </main>

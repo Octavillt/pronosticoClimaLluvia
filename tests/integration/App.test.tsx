@@ -5,6 +5,7 @@ import App from '../../src/App';
 import { config } from '../../src/config';
 import { limpiarExpirados } from '../../src/services/cache';
 import { ensambleFixture, forecastFixture } from '../helpers/ensamble';
+import { indiceRadarFixture } from '../helpers/radar';
 import { server } from '../setup';
 
 const CDMX = { lat: 19.43, lon: -99.13 };
@@ -61,6 +62,8 @@ function mockProveedores() {
   server.use(
     http.get(`${config.urls.ensemble}`, () => HttpResponse.json(ensambleFixture())),
     http.get(`${config.urls.forecast}`, () => HttpResponse.json(forecastFixture())),
+    // Sin frames de radar: el servicio de nowcast termina sin pedir tiles.
+    http.get(`${config.urls.rainviewer}`, () => HttpResponse.json(indiceRadarFixture({ numFrames: 0 }))),
     http.get(`${config.urls.geocoding}`, () =>
       HttpResponse.json({
         results: [
