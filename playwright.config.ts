@@ -1,6 +1,11 @@
 import { defineConfig } from '@playwright/test';
 
-const modoVisible = process.argv.includes('--headed');
+// Los workers (quienes lanzan el navegador) no ven `--headed` en su argv: el proceso principal
+// lo publica por el entorno para que también apliquen `slowMo` y el timeout largo.
+if (process.argv.includes('--headed')) {
+  process.env.E2E_VISIBLE = '1';
+}
+const modoVisible = process.env.E2E_VISIBLE === '1';
 
 export default defineConfig({
   workers: modoVisible ? 1 : undefined,
