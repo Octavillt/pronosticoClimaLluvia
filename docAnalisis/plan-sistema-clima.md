@@ -123,6 +123,7 @@ docAnalisis/analisis-sistema-clima.md, docAnalisis/flujo-ramas.md
   - Retención de 90 días, export/import JSON validado antes de escribir y borrado con doble confirmación dentro de la página (análisis §9.3).
   - **Sigue sin medirse** el aporte real del radar y la ganancia de la calibración: el Panel de Exactitud los mide a medida que se acumulen datos.
   - Al pasar se corrigió un defecto de la Fase 1: si IndexedDB falla, el pronóstico ya no se cae (la caché es opcional).
+  - VoBo (2026-09-30): el usuario dio su VoBo tras la corrida E2E visible `2026-09-30_1353_a6647fe` (17/17 aprobadas, con `slowMo` aplicado; 13 previas y 4 nuevas de verificación).
 
 **Preparación (una sola vez; el 2026-09-24 se confirmó que el repo existe y está vacío):**
 1. Volver a correr `gh repo view Octavillt/pronosticoClimaLluvia` justo antes del primer push, para confirmar que sigue vacío.
