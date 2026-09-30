@@ -124,3 +124,93 @@ Límites del método:
 - Solo modela traslación: no prevé crecimiento, decaimiento ni nacimiento de celdas.
 - Con celdas pequeñas y horizontes largos la PoP del radar baja, porque el disco de incertidumbre ya es mucho mayor que la celda. Es lo esperado, y por eso `w` cae con el horizonte.
 - Los pesos y el umbral de 20 dBZ no están calibrados; la Fase 3 los ajustará con datos propios.
+
+## 9. Fase 3: verificación y calibración local
+
+### 9.1 Registro de pronósticos y observaciones
+
+La aplicación conserva en IndexedDB las probabilidades emitidas y las observaciones de cada
+ubicación, agrupadas por geohash-5. No necesita un servidor de verificación. El radar aporta una
+observación automática por frame con cobertura en el píxel del punto: se considera lluvia cuando
+la reflectividad es ≥20 dBZ. Se usa el píxel puntual, no la fracción de lluvia en el disco del
+nowcast, porque se quiere contrastar lo observado en el lugar. Un frame sin cobertura no genera
+una observación seca. El botón «¿Está lloviendo?» añade observaciones del usuario con el instante
+actual; radar y usuario conservan fuentes e identificadores distintos y se deduplican por id.
+
+Las etiquetas horarias mantienen la alineación de §8.4: `T` es el final del intervalo `(T − 1 h, T]`.
+Una hora solo se da por resuelta cuando terminó y tiene al menos **3 ventanas distintas de 10 min**
+observadas. Varias observaciones de una misma ventana cuentan una sola vez; si alguna vio lluvia,
+esa ventana se considera mojada. Una hora resuelta tuvo lluvia si alguna de sus ventanas la vio.
+Se exige el mismo número de ventanas para horas secas y mojadas: resolver una hora mojada con un
+solo «sí», pero exigir varios «no» para la seca, inflaría artificialmente la frecuencia de lluvia.
+
+Se registran las bandas de anticipación **0–1, 1–3, 3–6, 6–12, 12–24 y 24–72 h**, según el tiempo
+que faltaba para el final de la hora al emitir la PoP. Por cada `(celda, fin de hora, horizonte)`
+**la primera emisión gana**: las actualizaciones posteriores no reemplazan ese pronóstico.
+El reloj reintenta el registro cuando una hora entra en otra banda; un conjunto de ids en memoria
+evita escrituras repetidas cada minuto. Cada registro contiene la **PoP sin calibrar**, salida
+de la mezcla, además de la PoP del ensamble solo y el peso del radar. Guardar la PoP calibrada
+contaminaría el ajuste futuro con su propia salida.
+
+### 9.2 Calibración y evaluación
+
+Las horas resueltas se emparejan con sus predicciones por celda y fin de hora. Se ajusta una
+regresión **isotónica por horizonte**, con PAV (pool adjacent violators) y al menos **150 pares**
+en ese horizonte. Los valores de PoP repetidos se promedian antes de agrupar las violaciones de
+monotonicidad; los bloques finales aportan puntos de la curva. Se interpola linealmente entre
+puntos y se mantiene el valor del extremo fuera del rango observado. La salida se recorta a
+**[0.01, 0.99]**, para no afirmar certeza absoluta. Sin modelo para una banda, la PoP se conserva.
+El `n` del modelo equivale a horas verificadas de ese horizonte: una predicción por celda, hora y
+banda. El ajuste se aplica a la probabilidad actual y a la serie mostrada; una leyenda discreta
+indica las horas verificadas utilizadas para calibrar la hora en curso.
+
+El **Panel de Exactitud** muestra observaciones, horas verificadas, horas insuficientes y pares;
+una misma hora puede aportar pares a varias bandas. Evalúa las probabilidades emitidas sin
+calibrar, no las corregidas retrospectivamente. El **Brier** es el error cuadrático medio entre
+probabilidad y resultado observado (menor es mejor; 0 es perfecto). Se compara la mezcla con el
+ensamble solo y con una climatología definida como la frecuencia de lluvia de la muestra local.
+El **skill** es `1 − Brier_mezcla / Brier_climatología`: positivo mejora esa referencia, negativo
+la empeora y cero no mejora; no es calculable si la muestra solo tiene resultados de un tipo.
+Esta climatología no es una normal climática externa y se calcula con la misma muestra evaluada.
+
+Para medir el **aporte del radar** pendiente en §8.6, se comparan el Brier de la mezcla y el del
+ensamble en los mismos pares donde el peso del radar era >0.05. La tabla por horizonte indica
+frecuencia, Brier y cuántos pares faltan para calibrar; el diagrama de confiabilidad enfrenta PoP
+media con frecuencia observada por caja, con tabla equivalente accesible. Las muestras de menos
+de 30 pares, tanto globales como del radar, se presentan como aún no concluyentes. **La magnitud
+de la mejora real y del aporte del radar sigue pendiente de medición**; los historiales sintéticos
+de las pruebas solo verifican el funcionamiento, no demuestran ganancia meteorológica.
+
+### 9.3 Conservación y portabilidad
+
+Se conservan **90 días**: al abrir la app se purgan predicciones por fin de hora y observaciones
+por instante. Exportar descarga `sistemaclima-verificacion-AAAA-MM-DD.json`, con formato y versión
+explícitos, fecha de exportación, predicciones y observaciones. Importar valida el archivo completo
+antes de escribir, incluidos tipos, números finitos, probabilidades, horizontes, fuentes y un
+tope de 200 000 registros; mezcla sin sobrescribir las primeras emisiones y une observaciones
+por id. Un archivo inválido muestra el motivo y no cambia el historial. El borrado requiere dos
+pasos dentro de la página, con opción de cancelar.
+
+Exportar periódicamente permite respaldar y trasladar datos entre navegadores: **Safari/iOS
+puede eliminar IndexedDB tras unos 7 días sin uso**, y otros navegadores también pueden expulsar
+datos por cuota. El historial es local al dispositivo y navegador, sin sincronización automática.
+Si IndexedDB falla, se desactivan el registro y la calibración local; el pronóstico sigue
+disponible consultando los proveedores sin depender de la caché.
+
+### 9.4 Límites conocidos
+
+- **Proxy ≠ precipitación ≥0.2 mm/h:** el píxel con ≥20 dBZ o el toque del usuario indican lluvia
+  en un instante, no una acumulación horaria medida por pluviómetro.
+- **Tres ventanas no cubren la hora completa.** Cada consulta de radar incorpora los últimos
+  tres frames (unos 30 min de historia). Una hora puede darse por seca antes de observar lluvia
+  posterior de esa misma hora; por ello la frecuencia observada tiende a subestimar la lluvia
+  real. La magnitud de ese sesgo no está cuantificada.
+- La muestra favorece las horas y lugares con radar utilizable y las sesiones en que se abre
+  la app. Sin cobertura no hay observación automática; los reportes voluntarios del usuario
+  también pueden introducir sesgo de selección.
+- Los datos y modelos pertenecen a cada dispositivo/navegador. Importar amplía esa muestra,
+  pero no elimina sus sesgos ni verifica externamente las observaciones.
+- Al inicio hay poca muestra; una banda con menos de 150 pares no se calibra. Alcanzar ese
+  mínimo permite ajustar la curva, pero no demuestra por sí solo mejora fuera de la muestra.
+- La isotónica corrige la confiabilidad observada, no los límites físicos del nowcast de §8.6
+  ni el crecimiento, decaimiento o nacimiento de tormentas.

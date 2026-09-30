@@ -112,7 +112,39 @@ describe('App', () => {
     fireEvent.click(await screen.findByRole('button', { name: /Guadalajara, Jalisco/ }));
 
     await waitFor(() => expect(screen.getByTestId('pop-ahora')).toBeTruthy());
-    expect(screen.getByText(/Guadalajara/)).toBeTruthy();
+    expect(screen.getByText('Guadalajara', { exact: true })).toBeTruthy();
+  });
+
+  test(
+    'en la ubicación geolocalizada conserva el título original y no añade el aviso de lugar',
+    async () => {
+      mockGeolocalizacion({ tipo: 'ok' });
+      mockProveedores();
+      render(<App />);
+      const titulo = await screen.findByRole('heading', { name: '¿Está lloviendo?' });
+      expect(titulo.textContent).toBe('¿Está lloviendo?');
+      expect(screen.queryByText(/Reporta solo lo que ves donde estás/)).toBeNull();
+      expect(screen.getByRole('button', { name: 'Sí, está lloviendo' })).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'No está lloviendo' })).toBeTruthy();
+    },
+  );
+
+  test('en una ciudad buscada identifica el lugar y explica qué se debe reportar', async () => {
+    mockGeolocalizacion({ tipo: 'denegado' });
+    mockProveedores();
+    render(<App />);
+    const campo = await screen.findByLabelText('Nombre de la ciudad');
+    fireEvent.change(campo, { target: { value: 'Guadalajara' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Buscar' }));
+    fireEvent.click(await screen.findByRole('button', { name: /Guadalajara, Jalisco/ }));
+    expect(await screen.findByRole('heading', {
+      name: '¿Está lloviendo en Guadalajara?',
+    })).toBeTruthy();
+    expect(screen.getByText(
+      'Reporta solo lo que ves donde estás: estos reportes calibran el pronóstico de este lugar.',
+    )).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Sí, está lloviendo' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'No está lloviendo' })).toBeTruthy();
   });
 
   test('si los proveedores fallan muestra error y permite reintentar', async () => {

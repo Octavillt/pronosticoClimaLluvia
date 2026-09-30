@@ -99,6 +99,8 @@ export interface Nowcast {
   pronostico: PasoNowcast[];
   /** Velocidad y rumbo del avance de la lluvia, si se pudo estimar. */
   avance: { kmh: number; haciaGrados: number } | null;
+  /** Reflectividad del píxel del punto en cada frame que tenía cobertura ahí. */
+  puntual: { tMs: number; dbz: number }[];
 }
 
 export type ResultadoNowcast =
@@ -113,3 +115,42 @@ export type EstadoRadar =
   | { estado: 'sin-cobertura' }
   | { estado: 'desactualizado'; edadMin: number }
   | { estado: 'error'; mensaje: string };
+
+/** PoP que la app emitió para una hora, guardada para compararla después con lo observado. */
+export interface Prediccion {
+  /** `celda|finMs|horizonteH`: la primera emisión de cada horizonte es la que vale. */
+  id: string;
+  /** Geohash-5 del punto donde se emitió. */
+  celda: string;
+  /** Etiqueta de la hora (Open-Meteo): fin del intervalo `(fin − 1 h, fin]`, en ms UTC. */
+  finMs: number;
+  emitidoMs: number;
+  /** Cota superior (h) del horizonte: cuánto faltaba para el fin de la hora al emitirla. */
+  horizonteH: number;
+  /** PoP final sin calibrar (mezcla de ensamble y radar). */
+  pop: number;
+  /** PoP del ensamble solo, para medir lo que aporta el radar. */
+  popEnsamble: number;
+  pesoRadar: number;
+}
+
+export type FuenteObservacion = 'radar' | 'usuario';
+
+/** Lo que se vio en un instante: llovía o no en el punto. */
+export interface Observacion {
+  /** `celda|fuente|tMs`: así una misma imagen de radar no se registra dos veces. */
+  id: string;
+  celda: string;
+  tMs: number;
+  lluvia: boolean;
+  fuente: FuenteObservacion;
+}
+
+/** Una PoP emitida junto con lo que pasó en su hora. */
+export interface ParVerificado {
+  horizonteH: number;
+  pop: number;
+  popEnsamble: number;
+  pesoRadar: number;
+  observado: 0 | 1;
+}

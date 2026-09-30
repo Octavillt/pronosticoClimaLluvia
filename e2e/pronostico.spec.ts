@@ -68,7 +68,7 @@ test.describe('Fase 1: pronóstico con fixtures', () => {
     await page.getByRole('button', { name: /Guadalajara, Jalisco/ }).click();
 
     await expect(page.getByTestId('pop-ahora')).toBeVisible();
-    await expect(page.getByText(/Guadalajara/)).toBeVisible();
+    await expect(page.getByText('Guadalajara', { exact: true })).toBeVisible();
   });
 
   test('Madrid muestra el mensaje de fuera de cobertura', async ({ page, context }) => {

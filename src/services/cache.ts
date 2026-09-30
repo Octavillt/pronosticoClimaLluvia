@@ -1,25 +1,9 @@
-const DB_NOMBRE = 'sistemaclima';
-const DB_VERSION = 1;
-const STORE = 'cache';
+import { abrirDb, STORE_CACHE as STORE } from './db';
 
 interface RegistroCache<T> {
   clave: string;
   expiraEn: number;
   valor: T;
-}
-
-function abrirDb(): Promise<IDBDatabase> {
-  return new Promise((resolve, reject) => {
-    const peticion = indexedDB.open(DB_NOMBRE, DB_VERSION);
-    peticion.onupgradeneeded = () => {
-      const db = peticion.result;
-      if (!db.objectStoreNames.contains(STORE)) {
-        db.createObjectStore(STORE, { keyPath: 'clave' });
-      }
-    };
-    peticion.onsuccess = () => resolve(peticion.result);
-    peticion.onerror = () => reject(peticion.error ?? new Error('No se pudo abrir IndexedDB'));
-  });
 }
 
 function transaccion<T>(
