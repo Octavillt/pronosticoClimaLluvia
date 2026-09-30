@@ -115,7 +115,7 @@ docAnalisis/analisis-sistema-clima.md, docAnalisis/flujo-ramas.md
   - El esquema de color 0 (grises) **no existe** en la API pública: RainViewer sirve solo Universal Blue, así que se decodifica con la tabla de la paleta (análisis §8.1).
   - La mezcla exigió corregir dos defectos de la Fase 1 en la alineación horaria: "probabilidad ahora" y "próximas horas" ahora parten de la hora en curso (análisis §8.4).
   - El hindcast con radar real no demuestra mejora sobre la persistencia; la ganancia se medirá en la Fase 3 (análisis §8.6).
-  - Pendiente del flujo: el E2E visible de esta fase se corre en `testClimateRain`, con aviso previo.
+  - VoBo (2026-09-29): el usuario dio su VoBo tras la corrida E2E visible `2026-09-29_2224_054c007` (13/13 aprobadas, con `slowMo` aplicado). Antes se corrigió un defecto de la config de Playwright: los workers no veían `--headed`, así que `slowMo` no se aplicaba (PR #5).
 
 **Preparación (una sola vez; el 2026-09-24 se confirmó que el repo existe y está vacío):**
 1. Volver a correr `gh repo view Octavillt/pronosticoClimaLluvia` justo antes del primer push, para confirmar que sigue vacío.
