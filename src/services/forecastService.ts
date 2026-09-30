@@ -82,7 +82,8 @@ export async function obtenerPronostico(punto: GeoPoint): Promise<ResultadoProno
   }
 
   const clave = `pop:${geohashEncode(punto.lat, punto.lon)}:${corridaModelo()}`;
-  const cacheado = await leerCache<DatosCacheables>(clave);
+  // La caché es opcional: un navegador sin IndexedDB aún puede consultar los proveedores.
+  const cacheado = await leerCache<DatosCacheables>(clave).catch(() => null);
   if (cacheado) {
     return { ...cacheado, punto, fuentes: { ...cacheado.fuentes, cache: 'hit' } };
   }
@@ -120,7 +121,7 @@ export async function obtenerPronostico(punto: GeoPoint): Promise<ResultadoProno
       cache: 'miss',
     },
   };
-  await guardarCache(clave, datos, ttlHastaSiguienteCorrida());
+  await guardarCache(clave, datos, ttlHastaSiguienteCorrida()).catch(() => undefined);
 
   return datos;
 }

@@ -114,6 +114,13 @@ export function calcularNowcast(
     ...evaluarDisco(campo.dbz, cobertura, lado, puntoX, puntoY, radioPx(0), opciones.umbralDbz),
   }));
 
+  // Lo que el radar vio justo en el punto, para verificar después el pronóstico.
+  const pixelPunto = Math.floor(puntoY) * lado + Math.floor(puntoX);
+  const puntual =
+    cobertura[pixelPunto] === 0
+      ? []
+      : campos.map((campo) => ({ tMs: campo.tMs, dbz: campo.dbz[pixelPunto] }));
+
   const pronostico: PasoNowcast[] = [];
   for (let minutos = 0; minutos <= opciones.horizonteMin; minutos += opciones.pasoMin) {
     pronostico.push({
@@ -130,5 +137,12 @@ export function calcularNowcast(
     });
   }
 
-  return { tFrameMs: ultimo.tMs, movimiento, observados, pronostico, avance: avanceDe(movimiento, lat, zoom) };
+  return {
+    tFrameMs: ultimo.tMs,
+    movimiento,
+    observados,
+    pronostico,
+    avance: avanceDe(movimiento, lat, zoom),
+    puntual,
+  };
 }

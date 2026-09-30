@@ -26,6 +26,7 @@ function nowcastFalso(
       cobertura,
     })),
     avance: null,
+    puntual: [],
   };
 }
 

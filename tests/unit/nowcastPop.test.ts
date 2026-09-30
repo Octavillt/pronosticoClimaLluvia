@@ -179,6 +179,25 @@ describe('calcularNowcast', () => {
     expect(nowcast.observados.every((p) => p.cobertura === 0)).toBe(true);
   });
 
+  test('puntual registra el dBZ del píxel del punto en cada frame, o nada sin cobertura', () => {
+    const nowcast = nowcastDe(camposQueAvanzan(PUNTO, PUNTO, 0, 0));
+    expect(nowcast.puntual).toEqual([
+      { tMs: T0 - 20 * 60_000, dbz: 35 },
+      { tMs: T0 - 10 * 60_000, dbz: 35 },
+      { tMs: T0, dbz: 35 },
+    ]);
+    // Un punto fuera del disco lee el fondo (−32 dBZ), pero con cobertura sí se registra.
+    const lejos = calcularNowcast({
+      campos: camposQueAvanzan(100, 100, 0, 0),
+      cobertura: coberturaTotal(LADO),
+      lado: LADO, puntoX: PUNTO, puntoY: PUNTO, lat: LAT, zoom: ZOOM,
+    });
+    expect(lejos.puntual.map((p) => p.dbz)).toEqual([-32, -32, -32]);
+    // Sin cobertura en el píxel del punto no hay observación que registrar.
+    const sinCobertura = nowcastDe(camposQueAvanzan(PUNTO, PUNTO, 0, 0), coberturaTotal(LADO, 0));
+    expect(sinCobertura.puntual).toEqual([]);
+  });
+
   test('exige al menos un frame', () => {
     expect(() => nowcastDe([])).toThrow(/al menos un frame/);
   });

@@ -8,14 +8,19 @@ import type {
   ResultadoPronostico,
 } from './domain/types';
 import { mezclarPop } from './services/blend';
+import { calibrarSerie } from './services/calibracion';
 import { obtenerPronostico } from './services/forecastService';
 import { obtenerNowcast } from './services/nowcastService';
+import { horizonteDe } from './services/verificacion';
 import { BuscadorCiudad } from './ui/BuscadorCiudad';
+import { BotonLluvia } from './ui/BotonLluvia';
 import { EstadoFuentes } from './ui/EstadoFuentes';
 import { LineaDeHoras } from './ui/LineaDeHoras';
 import { ProbabilidadAhora } from './ui/ProbabilidadAhora';
+import { PanelExactitud } from './ui/PanelExactitud';
 import { UbicacionActual } from './ui/UbicacionActual';
-import { indiceHoraEnCurso } from './utils/horas';
+import { useVerificacion } from './ui/useVerificacion';
+import { indiceHoraEnCurso, MS_HORA } from './utils/horas';
 
 // Leaflet pesa bastante: solo se descarga cuando hay radar que mostrar.
 const MapaRadar = lazy(() => import('./ui/MapaRadar'));
@@ -42,6 +47,8 @@ export default function App() {
   const cargar = useCallback(async (destino: GeoPoint, nombre: string | null) => {
     setFase('solicitando');
     setMensajeError(null);
+    setNowcast(null);
+    setIndiceRadar(null);
     setPunto(destino);
     setNombreLugar(nombre);
     try {
@@ -121,7 +128,10 @@ export default function App() {
         }
       } catch (error) {
         if (vigente) {
-          sinRadar({ estado: 'error', mensaje: error instanceof Error ? error.message : 'Error desconocido' });
+          sinRadar({
+            estado: 'error',
+            mensaje: error instanceof Error ? error.message : 'Error desconocido',
+          });
         }
       }
     };
@@ -148,6 +158,33 @@ export default function App() {
   );
   const horaEnCurso = resultado ? indiceHoraEnCurso(resultado.horasUtc, ahoraMs) : 0;
 
+  // Lo que se registra es la PoP sin calibrar; la calibración solo corrige lo que se muestra.
+  const verificacion = useVerificacion({
+    punto: fase === 'listo' ? punto : null,
+    resultado: fase === 'listo' ? resultado : null,
+    mezcla: fase === 'listo' ? mezcla : null,
+    nowcast: fase === 'listo' ? nowcast : null,
+    ahoraMs,
+  });
+
+  const popMostrada = useMemo(
+    () =>
+      resultado && mezcla
+        ? calibrarSerie(verificacion.calibracion, resultado.horasUtc, mezcla.pop, ahoraMs)
+        : null,
+    [resultado, mezcla, ahoraMs, verificacion.calibracion],
+  );
+
+  const horasVerificadasEnCurso = useMemo(() => {
+    if (!resultado) {
+      return null;
+    }
+    const horizonteH = horizonteDe(
+      (Date.parse(resultado.horasUtc[horaEnCurso]) - ahoraMs) / MS_HORA,
+    );
+    return horizonteH === null ? null : (verificacion.calibracion[horizonteH]?.n ?? null);
+  }, [resultado, horaEnCurso, ahoraMs, verificacion.calibracion]);
+
   return (
     <main style={{ fontFamily: 'system-ui, sans-serif', maxWidth: 720, margin: '0 auto', padding: 16 }}>
       <h1>{config.appName}</h1>
@@ -171,7 +208,7 @@ export default function App() {
         </section>
       )}
 
-      {fase === 'listo' && resultado && mezcla && punto && (
+      {fase === 'listo' && resultado && mezcla && popMostrada && punto && (
         <>
           <UbicacionActual
             punto={punto}
@@ -179,14 +216,22 @@ export default function App() {
             onCambiar={() => setFase('sin-ubicacion')}
           />
           <ProbabilidadAhora
-            pop={mezcla.pop[horaEnCurso]}
+            pop={popMostrada[horaEnCurso]}
             horaUtc={resultado.horasUtc[horaEnCurso]}
             timezone={resultado.timezone}
             conRadar={mezcla.pesoRadar[horaEnCurso] > PESO_RADAR_VISIBLE}
+            horasVerificadas={horasVerificadasEnCurso}
+          />
+          <BotonLluvia
+            key={`${punto.lat}|${punto.lon}`}
+            disponible={verificacion.disponible}
+            lugar={nombreLugar}
+            cargando={verificacion.resumen === null}
+            registrarObservacionUsuario={verificacion.registrarObservacionUsuario}
           />
           <LineaDeHoras
             horasUtc={resultado.horasUtc}
-            pop={mezcla.pop}
+            pop={popMostrada}
             pesoRadar={mezcla.pesoRadar}
             desde={horaEnCurso}
             timezone={resultado.timezone}
@@ -201,6 +246,13 @@ export default function App() {
               />
             </Suspense>
           )}
+          <PanelExactitud
+            resumen={verificacion.resumen}
+            disponible={verificacion.disponible}
+            exportar={verificacion.exportar}
+            importar={verificacion.importar}
+            borrar={verificacion.borrar}
+          />
           <EstadoFuentes fuentes={resultado.fuentes} radar={radar} timezone={resultado.timezone} />
           <p style={{ fontSize: '0.8rem' }}>
             Datos: Open-Meteo, radar de RainViewer y mapa © OpenStreetMap.
