@@ -25,11 +25,13 @@ export function ensambleFixture(
   opciones: {
     modelos?: readonly string[];
     numHoras?: number;
+    /** Primera hora de la serie (UTC), p. ej. `2026-09-30T00:00`. */
+    inicio?: string;
     precipitacion?: (miembro: number, hora: number) => number;
   } = {},
 ) {
   const modelos = opciones.modelos ?? MODELOS_PRUEBA;
-  const horas = horasUtcPrueba(opciones.numHoras ?? 72);
+  const horas = horasUtcPrueba(opciones.numHoras ?? 72, opciones.inicio);
   const precip = opciones.precipitacion ?? (() => 0);
   const hourly: Record<string, unknown> = { time: horas };
   for (const modelo of modelos) {
@@ -46,13 +48,13 @@ export function ensambleFixture(
   return { latitude: 19.43, longitude: -99.13, hourly };
 }
 
-export function forecastFixture(numHoras = 72) {
+export function forecastFixture(numHoras = 72, inicio?: string) {
   return {
     latitude: 19.43,
     longitude: -99.13,
     timezone: 'America/Mexico_City',
     hourly: {
-      time: horasUtcPrueba(numHoras),
+      time: horasUtcPrueba(numHoras, inicio),
       temperature_2m: Array.from({ length: numHoras }, () => 20),
       precipitation: Array.from({ length: numHoras }, () => 0),
       weather_code: Array.from({ length: numHoras }, () => 1),

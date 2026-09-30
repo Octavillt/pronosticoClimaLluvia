@@ -1,5 +1,6 @@
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 import { ensambleFixture, forecastFixture } from '../tests/helpers/ensamble';
+import { indiceRadarFixture } from '../tests/helpers/radar';
 
 const CDMX = { latitude: 19.43, longitude: -99.13 };
 
@@ -12,6 +13,10 @@ async function conGeolocalizacion(
 }
 
 async function conProveedoresSimulados(page: Page) {
+  // Sin frames de radar: el nowcast termina sin pedir tiles.
+  await page.route('**/api.rainviewer.com/**', (ruta) =>
+    ruta.fulfill({ json: indiceRadarFixture({ numFrames: 0 }) }),
+  );
   await page.route('**/ensemble-api.open-meteo.com/**', (ruta) =>
     ruta.fulfill({ json: ensambleFixture() }),
   );
@@ -92,6 +97,9 @@ test.describe('Fase 1: pronóstico con fixtures', () => {
       caido
         ? ruta.fulfill({ status: 500, json: { error: 'boom' } })
         : ruta.fulfill({ json: forecastFixture() }),
+    );
+    await page.route('**/api.rainviewer.com/**', (ruta) =>
+      ruta.fulfill({ json: indiceRadarFixture({ numFrames: 0 }) }),
     );
 
     await page.goto('/');

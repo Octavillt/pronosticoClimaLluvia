@@ -21,3 +21,17 @@ export async function fetchJson(url: string, timeoutMs = 12_000): Promise<unknow
     clearTimeout(temporizador);
   }
 }
+
+export async function fetchBlob(url: string, timeoutMs = 12_000): Promise<Blob> {
+  const controlador = new AbortController();
+  const temporizador = setTimeout(() => controlador.abort(), timeoutMs);
+  try {
+    const respuesta = await fetch(url, { signal: controlador.signal });
+    if (!respuesta.ok) {
+      throw new HttpError(respuesta.status, url);
+    }
+    return await respuesta.blob();
+  } finally {
+    clearTimeout(temporizador);
+  }
+}
