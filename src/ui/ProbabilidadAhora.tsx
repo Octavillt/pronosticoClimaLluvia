@@ -8,9 +8,11 @@ interface Props {
   timezone: string;
   /** Si el radar interviene de forma apreciable en este valor. */
   conRadar?: boolean;
+  /** Horas verificadas del horizonte de esta hora; `null`/ausente si no hay calibración. */
+  horasVerificadas?: number | null;
 }
 
-export function ProbabilidadAhora({ pop, horaUtc, timezone, conRadar = false }: Props) {
+export function ProbabilidadAhora({ pop, horaUtc, timezone, conRadar = false, horasVerificadas = null }: Props) {
   const porcentaje = Math.round(pop * 100);
   const finMs = Date.parse(horaUtc);
   const inicioUtc = new Date(finMs - MS_HORA).toISOString();
@@ -27,6 +29,11 @@ export function ProbabilidadAhora({ pop, horaUtc, timezone, conRadar = false }: 
       <p style={{ fontSize: '0.85rem', margin: 0 }} data-testid="origen-pop">
         {conRadar ? 'Combina el radar con el ensamble de modelos.' : 'Basada en el ensamble de modelos.'}
       </p>
+      {horasVerificadas !== null && (
+        <p style={{ fontSize: '0.8rem', margin: 0, opacity: 0.7 }} data-testid="aviso-calibracion">
+          Calibrada con tu historial local ({horasVerificadas} horas verificadas)
+        </p>
+      )}
     </section>
   );
 }

@@ -116,6 +116,13 @@ docAnalisis/analisis-sistema-clima.md, docAnalisis/flujo-ramas.md
   - La mezcla exigió corregir dos defectos de la Fase 1 en la alineación horaria: "probabilidad ahora" y "próximas horas" ahora parten de la hora en curso (análisis §8.4).
   - El hindcast con radar real no demuestra mejora sobre la persistencia; la ganancia se medirá en la Fase 3 (análisis §8.6).
   - VoBo (2026-09-29): el usuario dio su VoBo tras la corrida E2E visible `2026-09-29_2224_054c007` (13/13 aprobadas, con `slowMo` aplicado). Antes se corrigió un defecto de la config de Playwright: los workers no veían `--headed`, así que `slowMo` no se aplicaba (PR #5).
+- **Fase 3 (verificación y calibración local), 2026-09-30:** implementada en `develop`. Decisiones que precisan el plan:
+  - La observación automática es el píxel del punto en el radar (≥ 20 dBZ); sin cobertura no se registra nada. Una hora se da por resuelta con al menos 3 ventanas de 10 min observadas, con la misma regla para horas secas y mojadas (análisis §9.1).
+  - Ese criterio **subestima la lluvia real** (tres ventanas no cubren la hora) y su magnitud no está cuantificada (análisis §9.4).
+  - Se registra la PoP **sin calibrar**. La isotónica se ajusta por horizonte (0–1, 1–3, 3–6, 6–12, 12–24 y 24–72 h) con al menos 150 horas verificadas, y solo corrige lo que se muestra (análisis §9.2).
+  - Retención de 90 días, export/import JSON validado antes de escribir y borrado con doble confirmación dentro de la página (análisis §9.3).
+  - **Sigue sin medirse** el aporte real del radar y la ganancia de la calibración: el Panel de Exactitud los mide a medida que se acumulen datos.
+  - Al pasar se corrigió un defecto de la Fase 1: si IndexedDB falla, el pronóstico ya no se cae (la caché es opcional).
 
 **Preparación (una sola vez; el 2026-09-24 se confirmó que el repo existe y está vacío):**
 1. Volver a correr `gh repo view Octavillt/pronosticoClimaLluvia` justo antes del primer push, para confirmar que sigue vacío.

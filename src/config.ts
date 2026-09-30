@@ -42,5 +42,24 @@ export const config = {
     /** Multiplicador del peso cuando hay ecos pero el movimiento no se pudo estimar. */
     factorMovimientoIncierto: 0.5,
   },
+  verificacion: {
+    /** Minutos de una ventana de observación: un frame de radar y un toque del botón en la misma ventana cuentan una vez. */
+    ventanaMin: 10,
+    /** Ventanas observadas que hacen falta en una hora para darla por resuelta, llueva o no. */
+    ventanasMinimasPorHora: 3,
+    /** Cotas superiores (horas de anticipación) de los horizontes en que se agrupa la PoP. */
+    horizontesH: [1, 3, 6, 12, 24, 72],
+    /** Pares verificados que hacen falta en un horizonte para calibrarlo. */
+    paresMinimosCalibracion: 150,
+    /** La isotónica nunca devuelve una certeza: se recorta a este rango. */
+    popMinima: 0.01,
+    popMaxima: 0.99,
+    /** Cajas del diagrama de confiabilidad. */
+    binsConfiabilidad: 10,
+    /** Peso del radar desde el cual un par cuenta como "con radar" al medir su aporte. */
+    pesoRadarSignificativo: 0.05,
+    /** Días que se conservan predicciones y observaciones; lo más viejo se purga al abrir la app. */
+    retencionDias: 90,
+  },
   googleWeatherKey: import.meta.env.VITE_GOOGLE_WEATHER_KEY ?? '',
 } as const;
