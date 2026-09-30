@@ -214,3 +214,96 @@ disponible consultando los proveedores sin depender de la caché.
   mínimo permite ajustar la curva, pero no demuestra por sí solo mejora fuera de la muestra.
 - La isotónica corrige la confiabilidad observada, no los límites físicos del nowcast de §8.6
   ni el crecimiento, decaimiento o nacimiento de tormentas.
+
+## 10. Fase 4: PWA instalable
+
+### 10.1 App shell y precaché versionado
+
+La PWA conserva el **app shell** en Cache Storage mediante un service worker propio. El plugin
+`vite/pwa.ts` genera `dist/sw.js` al terminar el build: recorre la salida y ordena las rutas de
+precaché, excluyendo `sw.js`, los mapas de fuentes y los archivos ocultos. Se eligió un plugin
+pequeño **sin Workbox** porque solo se necesita precaché estático y una política acotada de lectura;
+evita una dependencia nueva y mantiene explícita y comprobable la separación entre shell y datos.
+
+El build verificado tiene **10 archivos** precacheados: `index.html`, el JS principal, el JS y CSS
+del mapa perezoso, `manifest.webmanifest` y cinco íconos (192, 512, maskable, Apple y SVG). La lista
+se genera, no se mantiene a mano. La versión son los primeros 12 caracteres del SHA-256 de las
+rutas ordenadas y sus contenidos: cambia si cambia el shell y permanece igual en builds idénticos.
+Cada versión usa `sistemaclima-shell-<versión>`; al activar se borran únicamente los cachés anteriores
+con ese prefijo. Un fallo al descargar el precaché impide completar la instalación del nuevo worker.
+
+El manifest define nombre, idioma `es-MX`, inicio y scope relativos, colores y modo `standalone`.
+Los íconos se generan con `node scripts/generar-iconos.mjs` y se conservan en el repositorio para
+que el hosting solo tenga que ejecutar el build. PNG y SVG comparten una gota con lados tangentes
+al círculo; el maskable mantiene el fondo verde a sangre completa y la gota dentro de la zona segura.
+
+### 10.2 Separación entre shell y datos meteorológicos
+
+El worker no intercepta peticiones de otro origen: Open-Meteo, RainViewer y OpenStreetMap siguen
+hacia la red. Servir un pronóstico o radar antiguo como si fuera actual produciría datos falsos;
+la caché de pronósticos con su TTL correcto ya está en IndexedDB, por celda y corrida del modelo.
+Tampoco se cachean en el worker recursos del mismo origen ajenos al precaché, solicitudes distintas
+de GET ni peticiones con `Range`. `sw.js` queda fuera para que su descarga pueda detectar cambios.
+
+La navegación usa **cache-first** para la raíz del scope y `index.html`, ignorando la query; si no
+hay shell guardado se intenta la red. Cualquier otra ruta del dominio se deja al servidor. Los
+assets precacheados también se leen primero del caché de la versión activa, sin almacenar datos
+dinámicos ni respuestas de terceros.
+
+### 10.3 Registro y actualización con aviso
+
+Solo se registra el worker en producción y cuando el navegador lo soporta, al terminar de cargar
+la página o inmediatamente si ya terminó. La primera instalación activa el shell sin mostrar
+aviso de actualización. Una versión nueva instalada mientras la página ya está controlada queda
+en espera y muestra «Hay una versión nueva de SistemaClima» con el botón «Actualizar».
+
+El botón envía `SKIP_WAITING`; el cambio de controlador recarga la página una sola vez. No se
+activa automáticamente una versión nueva: una pestaña con el JS anterior podría pedir un chunk
+perezoso que el nuevo deploy ya borró. Esperar permite que esa pestaña siga usando el caché de su
+versión hasta que el usuario acepte el cambio, aunque no elimina el riesgo entre pestañas.
+
+El registro usa `updateViaCache: 'none'` para evitar que el caché HTTP conserve una copia antigua
+de `sw.js` al buscar cambios; las cabeceras de Hostinger podrían retenerlo. Se consulta una nueva
+versión cada hora y al volver visible la pestaña, con un mínimo de cinco minutos entre chequeos.
+Si el registro falla, la aplicación continúa funcionando sin service worker.
+
+### 10.4 Funcionamiento sin conexión y pruebas
+
+Después de una instalación completa, sin conexión carga el shell y se muestra el último pronóstico
+de la celda **solo si su entrada de IndexedDB sigue vigente para la corrida actual**. No se genera
+un pronóstico nuevo ni se ignora el TTL por estar offline. Sin una entrada válida, aparece el error
+normal al intentar consultar los proveedores. El radar, los tiles del mapa y la búsqueda de ciudad
+requieren red; un chunk del mapa precacheado no equivale a disponer de sus datos o imágenes offline.
+
+El aviso «Sin conexión» sigue `navigator.onLine` y desaparece al recuperar la conexión conocida
+por el navegador. Los E2E PWA usan Chromium contra `vite build` y `vite preview`, con geolocalización
+CDMX y proveedores simulados sin internet. Comprueban manifest e íconos, errores de instalabilidad
+mediante `Page.getInstallabilityErrors`, activación y control, recarga offline con pronóstico vigente,
+un único caché del shell sin URLs de terceros y ausencia de aviso en la primera instalación o al
+recargar sin cambios. La navegación offline debe provenir del service worker; las rutas de Playwright
+deshabilitan la caché HTTP y se bloquean los fixtures de terceros antes de esa recarga.
+
+Los E2E anteriores bloquean los service workers por defecto para que sus `page.route` sigan
+aislados; solo la spec PWA los permite. La actualización real entre versiones se comprueba con
+dobles en integración, sin interceptar `sw.js` en Playwright.
+
+### 10.5 Límites conocidos
+
+- **Dispositivos y hosting pendientes:** no se verificó instalación en un dispositivo real ni
+  comportamiento bajo las cabeceras de Hostinger, porque el primer deploy sigue pospuesto.
+  La instalabilidad solo se verificó en Chromium contra `vite preview`; Safari y Firefox no se probaron.
+- **iOS:** no muestra un aviso de instalación; se instala desde «Compartir → Añadir a pantalla de
+  inicio». Puede borrar los cachés e IndexedDB tras aproximadamente siete días sin uso.
+- **Conectividad aparente:** `navigator.onLine` no detecta portales cautivos ni señal débil. El aviso
+  offline solo aparece cuando el navegador sabe que no hay red; con mala señal se muestra el error
+  normal de red, no una garantía de disponibilidad de los proveedores.
+- **Raíz del dominio:** se asume el `base: '/'` de Vite; `index.html` enlaza `/manifest.webmanifest`
+  y `/icons/...`, aunque el worker y el manifest usan rutas relativas. Servir en un subdirectorio
+  exigiría revisar conjuntamente esas rutas. El shell solo cubre la raíz y `index.html`; las otras
+  rutas van al servidor y no adquieren soporte offline por instalar la PWA.
+- **Varias pestañas:** una pestaña antigua puede fallar al cargar un chunk perezoso, por ejemplo
+  el mapa, si otra pestaña activó la versión nueva y se eliminó el caché anterior.
+- **Almacenamiento local:** el navegador puede expulsar cachés o IndexedDB; no se garantiza conservar
+  el shell ni el último pronóstico indefinidamente. La primera visita necesita red.
+- **Fuera de alcance:** no hay sincronización en segundo plano ni notificaciones push; siguen fuera
+  del alcance del proyecto estático.

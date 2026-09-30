@@ -19,5 +19,5 @@
     "noFallthroughCasesInSwitch": true,
     "composite": true
   },
-  "include": ["src", "tests"]
+  "include": ["src", "tests", "vite"]
 }

@@ -12,6 +12,11 @@ import { calibrarSerie } from './services/calibracion';
 import { obtenerPronostico } from './services/forecastService';
 import { obtenerNowcast } from './services/nowcastService';
 import { horizonteDe } from './services/verificacion';
+import type { ControladorPwa } from './pwa/registro';
+import { useActualizacionPwa } from './pwa/useActualizacionPwa';
+import { useEnLinea } from './pwa/useEnLinea';
+import { AvisoActualizacion } from './ui/AvisoActualizacion';
+import { AvisoSinConexion } from './ui/AvisoSinConexion';
 import { BuscadorCiudad } from './ui/BuscadorCiudad';
 import { BotonLluvia } from './ui/BotonLluvia';
 import { EstadoFuentes } from './ui/EstadoFuentes';
@@ -31,7 +36,9 @@ const REFRESCO_RADAR_MS = 5 * 60_000;
 const REFRESCO_RELOJ_MS = 60_000;
 const PESO_RADAR_VISIBLE = 0.05;
 
-export default function App() {
+export default function App({ controladorPwa = null }: { controladorPwa?: ControladorPwa | null }) {
+  const hayActualizacion = useActualizacionPwa(controladorPwa);
+  const enLinea = useEnLinea();
   const [fase, setFase] = useState<Fase>('solicitando');
   const [punto, setPunto] = useState<GeoPoint | null>(null);
   const [nombreLugar, setNombreLugar] = useState<string | null>(null);
@@ -187,6 +194,11 @@ export default function App() {
 
   return (
     <main style={{ fontFamily: 'system-ui, sans-serif', maxWidth: 720, margin: '0 auto', padding: 16 }}>
+      <AvisoActualizacion
+        visible={hayActualizacion}
+        onActualizar={() => controladorPwa?.activar()}
+      />
+      <AvisoSinConexion enLinea={enLinea} />
       <h1>{config.appName}</h1>
 
       {fase === 'solicitando' && <p role="status">Obteniendo pronóstico…</p>}

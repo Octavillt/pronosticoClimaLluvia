@@ -124,6 +124,12 @@ docAnalisis/analisis-sistema-clima.md, docAnalisis/flujo-ramas.md
   - **Sigue sin medirse** el aporte real del radar y la ganancia de la calibración: el Panel de Exactitud los mide a medida que se acumulen datos.
   - Al pasar se corrigió un defecto de la Fase 1: si IndexedDB falla, el pronóstico ya no se cae (la caché es opcional).
   - VoBo (2026-09-30): el usuario dio su VoBo tras la corrida E2E visible `2026-09-30_1353_a6647fe` (17/17 aprobadas, con `slowMo` aplicado; 13 previas y 4 nuevas de verificación).
+- **Fase 4 (PWA instalable), 2026-09-30:** implementada en `develop`. Decisiones que precisan el plan:
+  - Service worker **propio, sin Workbox**: un plugin de Vite (`vite/pwa.ts`) escanea `dist` al final del build y genera `dist/sw.js` con el precaché del shell y una versión derivada de su contenido (análisis §10.1).
+  - El worker **no toca peticiones de otro origen**: un pronóstico o un radar viejo serían datos falsos, y la caché con su TTL correcto ya vive en IndexedDB. Sin conexión se ve el shell y el último pronóstico solo si su entrada sigue vigente (análisis §10.2 y §10.4).
+  - Una versión nueva **espera** hasta que el usuario pulsa «Actualizar» (`SKIP_WAITING`), y la página se recarga una sola vez; la primera instalación no muestra aviso (análisis §10.3).
+  - Se añadió un aviso «Sin conexión» basado en `navigator.onLine`, que no detecta señal débil ni portales cautivos (análisis §10.5).
+  - **No verificado todavía:** la instalación en un dispositivo real y el comportamiento bajo las cabeceras de Hostinger, porque el primer deploy sigue pospuesto. La instalabilidad solo se comprobó en Chromium (`Page.getInstallabilityErrors` sobre `vite preview`); Safari y Firefox no se probaron.
 
 **Preparación (una sola vez; el 2026-09-24 se confirmó que el repo existe y está vacío):**
 1. Volver a correr `gh repo view Octavillt/pronosticoClimaLluvia` justo antes del primer push, para confirmar que sigue vacío.

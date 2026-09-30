@@ -1,8 +1,9 @@
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
+import { pwaSistemaclima } from './vite/pwa.ts';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), pwaSistemaclima()],
   test: {
     environment: 'jsdom',
     setupFiles: ['tests/setup.ts'],
