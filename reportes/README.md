@@ -11,6 +11,7 @@ El más reciente primero. Los reportes HTML de Playwright y los JSON intermedios
 
 ## E2E
 
+- [2026-09-29_2224_054c007](e2e/2026-09-29_2224_054c007.md)
 - [2026-09-24_1124_5f405f4](e2e/2026-09-24_1124_5f405f4.md)
 - [2026-09-24_1100_22af35f](e2e/2026-09-24_1100_22af35f.md)
 - [2026-09-24_1059_22af35f](e2e/2026-09-24_1059_22af35f.md)
