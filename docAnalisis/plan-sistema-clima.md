@@ -149,7 +149,7 @@ docAnalisis/analisis-sistema-clima.md, docAnalisis/flujo-ramas.md
 - En E2E: `bugfix/bug-<descripcion>` desde `testClimateRain`, PR a `testClimateRain` y se vuelve a correr E2E, con back-merge a `develop`.
 - En producción: `hotfix/<descripcion>` desde `master`, PR a `master` (tú lo mergeas) y back-merge a `testClimateRain` y `develop`.
 
-Los commits terminan con `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>` y los PRs con el pie de Claude Code.
+No agregar atribuciones de coautoría a Claude en los commits.
 
 ---
 

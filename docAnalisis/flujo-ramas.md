@@ -36,6 +36,6 @@
 
 ## Convenciones
 
-- Los commits terminan con `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>` y los PRs con el pie de Claude Code.
+- No agregar atribuciones de coautoría a Claude en los commits.
 - Página única, sin router: no depende de `.htaccess`.
 - La llave de Google (si llega a usarse, Fase 5) va solo en "Variables de entorno" de Hostinger, nunca en el repo.
