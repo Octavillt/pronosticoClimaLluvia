@@ -277,8 +277,10 @@ requieren red; un chunk del mapa precacheado no equivale a disponer de sus datos
 
 El aviso «Sin conexión» sigue `navigator.onLine` y desaparece al recuperar la conexión conocida
 por el navegador. Los E2E PWA usan Chromium contra `vite build` y `vite preview`, con geolocalización
-CDMX y proveedores simulados sin internet. Comprueban manifest e íconos, errores de instalabilidad
-mediante `Page.getInstallabilityErrors`, activación y control, recarga offline con pronóstico vigente,
+CDMX y proveedores simulados sin internet. Comprueban manifest e íconos y exigen que no haya errores
+de instalabilidad mediante `Page.getInstallabilityErrors`, salvo `in-incognito`: Chromium con ventana
+lo reporta por el contexto off-the-record de Playwright, no por un defecto de la app. También verifican
+activación y control, recarga offline con pronóstico vigente,
 un único caché del shell sin URLs de terceros y ausencia de aviso en la primera instalación o al
 recargar sin cambios. La navegación offline debe provenir del service worker; las rutas de Playwright
 deshabilitan la caché HTTP y se bloquean los fixtures de terceros antes de esa recarga.

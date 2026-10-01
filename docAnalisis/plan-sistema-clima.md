@@ -130,6 +130,8 @@ docAnalisis/analisis-sistema-clima.md, docAnalisis/flujo-ramas.md
   - Una versión nueva **espera** hasta que el usuario pulsa «Actualizar» (`SKIP_WAITING`), y la página se recarga una sola vez; la primera instalación no muestra aviso (análisis §10.3).
   - Se añadió un aviso «Sin conexión» basado en `navigator.onLine`, que no detecta señal débil ni portales cautivos (análisis §10.5).
   - **No verificado todavía:** la instalación en un dispositivo real y el comportamiento bajo las cabeceras de Hostinger, porque el primer deploy sigue pospuesto. La instalabilidad solo se comprobó en Chromium (`Page.getInstallabilityErrors` sobre `vite preview`); Safari y Firefox no se probaron.
+  - La Fase 4 llegó a `master` (PR #10, `develop → master`) antes de pasar por la corrida E2E visible. Esa primera corrida dio 21/22: la prueba de instalabilidad recibía `in-incognito`, error propio del contexto *off-the-record* de Playwright con ventana, que el modo headless no reportaba. Se corrigió en `bugfix/bug-e2e-instalabilidad-incognito` (PR #11), tolerando solo ese `errorId`.
+  - VoBo (2026-09-30): el usuario dio su VoBo tras la corrida E2E visible `2026-09-30_1954_e36c93b` (22/22 aprobadas, con `slowMo` aplicado; 17 previas y 5 nuevas de PWA).
 
 **Preparación (una sola vez; el 2026-09-24 se confirmó que el repo existe y está vacío):**
 1. Volver a correr `gh repo view Octavillt/pronosticoClimaLluvia` justo antes del primer push, para confirmar que sigue vacío.
