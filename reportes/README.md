@@ -4,6 +4,7 @@ El más reciente primero. Los reportes HTML de Playwright y los JSON intermedios
 
 ## Unitarias e integración
 
+- [2026-09-30_2310_998b5cf](unitarias/2026-09-30_2310_998b5cf.md)
 - [2026-09-30_1700_4575797](unitarias/2026-09-30_1700_4575797.md)
 - [2026-09-30_1245_38502a4](unitarias/2026-09-30_1245_38502a4.md)
 - [2026-09-29_2204_0ef1942](unitarias/2026-09-29_2204_0ef1942.md)
