@@ -11,12 +11,14 @@ export interface SerieMiembros {
 
 export interface RespuestaEnsamble {
   horasUtc: string[];
+  /** Zona IANA del punto según la API, o null si la respuesta no trae una válida. */
+  timezone: string | null;
   porModelo: SerieMiembros[];
   modelosFallidos: string[];
 }
 
 export interface RespuestaPronostico {
-  timezone: string;
+  timezone: string | null;
   horasUtc: string[];
   temperaturaC: (number | null)[];
   precipitacionMm: (number | null)[];
