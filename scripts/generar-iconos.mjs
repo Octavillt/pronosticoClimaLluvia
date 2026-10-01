@@ -1,4 +1,4 @@
-// Genera los íconos PWA de public/icons/ (una gota de lluvia blanca sobre verde #009966).
+// Genera los íconos PWA de public/icons/ (una gota de lluvia blanca sobre azul #1e4f8f).
 // Los PNG se commitean al repo: Hostinger solo corre el build, no este script.
 // Para regenerarlos tras cambiar el dibujo: `node scripts/generar-iconos.mjs`.
 import { deflateSync } from 'node:zlib';
@@ -6,7 +6,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const VERDE = [0, 153, 102];
+const AZUL = [30, 79, 143];
 const BLANCO = [255, 255, 255];
 const SALIDA = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'icons');
 
@@ -98,7 +98,7 @@ function dibujar(lado, forma) {
         const v = (y + fy) / lado;
         if (dentroDeGota(u, v, forma)) blanco++;
       }
-      const color = blanco >= 2 ? BLANCO : VERDE;
+      const color = blanco >= 2 ? BLANCO : AZUL;
       const i = (y * lado + x) * 3;
       pixeles[i] = color[0];
       pixeles[i + 1] = color[1];
@@ -123,7 +123,7 @@ const TRAZO = [
   `L${coordenada(cx)} ${coordenada(pico)} Z`,
 ].join('\n    ');
 const SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#009966"/>
+  <rect width="512" height="512" rx="96" fill="#1e4f8f"/>
   <path fill="#ffffff" d="${TRAZO}"/>
 </svg>
 `;

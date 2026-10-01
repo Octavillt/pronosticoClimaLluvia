@@ -79,8 +79,8 @@ test.describe('Fase 4: PWA instalable', () => {
       start_url: './',
       scope: './',
       display: 'standalone',
-      background_color: '#ffffff',
-      theme_color: '#009966',
+      background_color: '#f6f5f2',
+      theme_color: '#1e4f8f',
       categories: ['weather'],
     });
     for (const lado of [192, 512]) {
