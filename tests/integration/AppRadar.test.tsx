@@ -137,4 +137,31 @@ describe('App con radar', () => {
     await waitFor(() => expect(within(fuentes).getByText(/Radar RainViewer/).textContent).toMatch(/hace 55 min/));
     expect(screen.queryByTestId('mapa-radar')).toBeNull();
   });
+  test('sin cobertura muestra la tarjeta de estado después de las horas sin crear un mapa', async () => {
+    mockProveedores({ escena: { ...TORMENTA_SOBRE_EL_PUNTO, cubierto: () => false } });
+    render(<App />);
+    const tarjeta = await screen.findByRole('region', { name: 'Estado del radar' });
+    expect(within(tarjeta).getByText('Sin cobertura')).toBeTruthy();
+    expect(within(tarjeta).getByText(
+      'Tu zona está fuera del alcance del radar. La probabilidad usa solo el ensamble de modelos.',
+    )).toBeTruthy();
+    expect(tarjeta.previousElementSibling?.classList.contains('proximas')).toBe(true);
+    expect(screen.queryByTestId('mapa-radar')).toBeNull();
+    expect(screen.getByText(/sin cobertura en esta zona/)).toBeTruthy();
+  });
+
+  test('un radar desactualizado muestra su tarjeta y conserva única la línea de fuentes', async () => {
+    mockProveedores({
+      indice: () => HttpResponse.json(indiceRadarFixture({ ahoraMs: AHORA.getTime(), edadUltimoMin: 55 })),
+    });
+    render(<App />);
+    const tarjeta = await screen.findByRole('region', { name: 'Estado del radar' });
+    expect(within(tarjeta).getByText('Hace 55 min')).toBeTruthy();
+    expect(within(tarjeta).getByText(
+      'La imagen más reciente del radar es de hace 55 min y no se usa en el pronóstico.',
+    )).toBeTruthy();
+    expect(tarjeta.previousElementSibling?.classList.contains('proximas')).toBe(true);
+    expect(screen.queryByTestId('mapa-radar')).toBeNull();
+    expect(screen.getAllByText(/hace 55 min y se ignora/)).toHaveLength(1);
+  });
 });

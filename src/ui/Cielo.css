@@ -1,0 +1,195 @@
+.cielo {
+  background: var(--color-cielo);
+  color: var(--color-sobre-cielo);
+  border-radius: 0 0 var(--radio-cielo) var(--radio-cielo);
+  overflow: hidden;
+  position: relative;
+  padding: var(--espacio-4) var(--espacio-4) 32px;
+}
+
+.cielo > :not(.cielo__ilustracion) {
+  position: relative;
+  z-index: 1;
+}
+
+.cielo__ilustracion {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 260px;
+  pointer-events: none;
+}
+
+.ilustracion__nube-lejana {
+  fill: var(--color-nube-lejana);
+}
+
+.ilustracion__nube-clara {
+  fill: var(--color-nube-clara);
+}
+
+.ilustracion__lluvia {
+  stroke: var(--color-lluvia);
+}
+
+.ilustracion__sol,
+.ilustracion__halo {
+  fill: var(--color-sol);
+}
+
+.cielo__barra {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cielo__marca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cielo__emblema {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radio-completo);
+  background: var(--color-sobre-cielo);
+  color: var(--color-cielo);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cielo__icono {
+  flex-shrink: 0;
+}
+
+.cielo__titulo {
+  margin: 0;
+  font-family: var(--fuente-titulos);
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.cielo__cambiar {
+  min-height: 44px;
+  height: 44px;
+  padding: 0 var(--espacio-4);
+  border-radius: var(--radio-control-chico);
+  border: 1px solid var(--color-sobre-cielo-suave);
+  background: var(--color-cielo-chip);
+  color: var(--color-sobre-cielo);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.cielo__lugar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  margin: var(--espacio-1) 0 0;
+  flex-wrap: wrap;
+}
+
+.cielo__nombre {
+  font-size: 15px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.cielo__coordenadas {
+  font-size: 13px;
+  color: var(--color-sobre-cielo-suave);
+}
+
+.cielo__hora {
+  margin: var(--espacio-4) 0 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--color-sobre-cielo-suave);
+}
+
+.cielo__numero {
+  display: flex;
+  align-items: baseline;
+  margin: var(--espacio-1) 0 0;
+  font-family: var(--fuente-titulos);
+}
+
+.cielo__cifra {
+  font-weight: 800;
+  font-size: 112px;
+  line-height: 104px;
+  letter-spacing: -4px;
+}
+
+.cielo__porcentaje {
+  font-weight: 700;
+  font-size: 48px;
+  line-height: 48px;
+  margin-left: 2px;
+}
+
+.cielo__accion {
+  margin: var(--espacio-1) 0 0;
+  font-family: var(--fuente-titulos);
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 32px;
+  max-width: 330px;
+  text-wrap: balance;
+}
+
+.cielo[data-nivel="alta"] .cielo__accion {
+  font-size: 34px;
+  line-height: 38px;
+}
+
+.cielo__frase {
+  margin: var(--espacio-2) 0 0;
+  font-size: 16px;
+  line-height: 22px;
+  color: var(--color-sobre-cielo-suave);
+  max-width: 330px;
+}
+
+.cielo__radar {
+  margin: 14px 0 0;
+  max-width: 100%;
+  height: auto;
+  min-height: 40px;
+}
+
+.cielo__origen {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.cielo__calibracion {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--color-sobre-cielo-suave);
+}
+
+/* En pantallas anchas el cielo es una tarjeta redondeada por las cuatro esquinas. */
+@media (min-width: 600px) {
+  .cielo {
+    border-radius: var(--radio-cielo);
+  }
+}

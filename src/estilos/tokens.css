@@ -1,0 +1,108 @@
+:root {
+  color-scheme: light dark;
+
+  /* Superficies y lectura. */
+  --color-fondo: #f6f5f2;
+  --color-tarjeta: #ffffff;
+  --color-texto: #17202b;
+  --color-texto-suave: #55606c;
+  --color-linea: #e3e0d8;
+  --color-linea-control: #838890;
+  --color-pista: #e8e5dd;
+
+  /* Cielo e ilustración. */
+  --color-cielo: #1e4f8f;
+  --color-cielo-chip: #163f73;
+  --color-sobre-cielo: #ffffff;
+  --color-sobre-cielo-suave: #c9ddf4;
+  --color-nube-lejana: #2f6ab1;
+  --color-nube-clara: #4b84c8;
+  --color-lluvia: #a9c8f0;
+  --color-sol: #f5c451;
+  --color-gota-sobre-cielo: #9cc3f0;
+
+  /* Ilustración fija del mapa. */
+  --color-mapa-fondo: #e7ecef;
+  --color-mapa-parque: #d4e6d8;
+  --color-mapa-agua: #cbddea;
+  --color-mapa-rejilla: #dce3e8;
+  --color-mapa-calle: #ffffff;
+
+  /* Acciones y aprendizaje. */
+  --color-primario: #1f5fae;
+  --color-accion: #00704a;
+  --color-sobre-accion: #ffffff;
+  --color-accion-texto: #00583a;
+  --color-accion-suave: #e3f1ea;
+  --color-texto-sobre-accion-suave: #33463d;
+
+  /* Avisos y errores. */
+  --color-aviso-fondo: #00704a;
+  --color-aviso-texto: #ffffff;
+  --color-aviso-boton-fondo: #ffffff;
+  --color-aviso-boton-texto: #0b3b2a;
+  --color-sin-conexion-fondo: #5f6368;
+  --color-sin-conexion-texto: #ffffff;
+  --color-error-fondo: #fdecec;
+  --color-error-texto: #9b1c1c;
+
+  /* Espaciado y radios compartidos. */
+  --espacio-1: 4px;
+  --espacio-2: 8px;
+  --espacio-3: 12px;
+  --espacio-4: 16px;
+  --espacio-5: 20px;
+  --espacio-6: 24px;
+  --radio-cielo: 32px;
+  --radio-tarjeta: 24px;
+  --radio-pildora: 22px;
+  --radio-control: 26px;
+  --radio-control-chico: 22px;
+  --radio-completo: 999px;
+
+  /* Tipografía autoalojada. */
+  --fuente-titulos: 'Bricolage Grotesque', 'Avenir Next', system-ui, sans-serif;
+  --fuente-texto: 'Figtree', 'Avenir Next', system-ui, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Superficies y lectura. */
+    --color-fondo: #0e1318;
+    --color-tarjeta: #171e26;
+    --color-texto: #eef2f6;
+    --color-texto-suave: #a9b4c0;
+    --color-linea: #2a343f;
+    --color-linea-control: #7b8794;
+    --color-pista: #2a343f;
+
+    /* Cielo e ilustración. */
+    --color-cielo: #12335e;
+    --color-cielo-chip: #0d2646;
+    --color-nube-lejana: #1e4c86;
+    --color-nube-clara: #2b5fa3;
+    --color-lluvia: #7fa9db;
+    --color-sol: #e8b84a;
+
+    /* Ilustración fija del mapa. */
+    --color-mapa-fondo: #12202b;
+    --color-mapa-parque: #142a25;
+    --color-mapa-agua: #0e2336;
+    --color-mapa-rejilla: #1c2a36;
+    --color-mapa-calle: #2a3948;
+
+    /* Acciones y aprendizaje. */
+    --color-primario: #6fa8f0;
+    --color-accion: #4cc38a;
+    --color-sobre-accion: #06281d;
+    --color-accion-texto: #4cc38a;
+    --color-accion-suave: #173a2b;
+    --color-texto-sobre-accion-suave: #c3d3cb;
+
+    /* Avisos y errores. */
+    --color-aviso-fondo: #0b6b47;
+    --color-sin-conexion-fondo: #4a4f55;
+    --color-error-fondo: #3a1a1a;
+    --color-error-texto: #f5b5b5;
+  }
+}

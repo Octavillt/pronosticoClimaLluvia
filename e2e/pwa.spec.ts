@@ -79,8 +79,8 @@ test.describe('Fase 4: PWA instalable', () => {
       start_url: './',
       scope: './',
       display: 'standalone',
-      background_color: '#ffffff',
-      theme_color: '#009966',
+      background_color: '#f6f5f2',
+      theme_color: '#1e4f8f',
       categories: ['weather'],
     });
     for (const lado of [192, 512]) {
@@ -144,6 +144,10 @@ test.describe('Fase 4: PWA instalable', () => {
       await expect(page.getByRole('heading', { name: 'SistemaClima', exact: true })).toBeVisible();
       await expect(page.getByText(AVISO_SIN_CONEXION, { exact: true })).toBeVisible();
       await expect(page.getByTestId('pop-ahora')).toHaveText(pronostico!);
+      // Las fuentes propias salen del precaché: sin red siguen disponibles.
+      await page.evaluate(() => document.fonts.ready);
+      expect(await page.evaluate(() => document.fonts.check('700 20px "Bricolage Grotesque"'))).toBe(true);
+      expect(await page.evaluate(() => document.fonts.check('400 16px Figtree'))).toBe(true);
       await expect(page.getByText('Caché: reutilizado', { exact: true })).toBeVisible();
       await context.setOffline(false);
       await expect(page.getByText(AVISO_SIN_CONEXION, { exact: true })).toHaveCount(0);
@@ -188,6 +192,9 @@ test.describe('Fase 4: PWA instalable', () => {
     const urlsCacheadas = new Set(cachesGuardados[0].urls);
     expect(urlsCacheadas.size).toBe(precache.size);
     expect(urlsCacheadas).toEqual(precache);
+    // El shell incluye las dos fuentes autoalojadas y las hojas de estilo.
+    expect(cachesGuardados[0].urls.filter((url) => url.endsWith('.woff2'))).toHaveLength(2);
+    expect(cachesGuardados[0].urls.filter((url) => url.endsWith('.css')).length).toBeGreaterThanOrEqual(1);
     for (const url of cachesGuardados[0].urls) expect(new URL(url).origin).toBe(ORIGEN);
   });
 

@@ -2,7 +2,7 @@
 
 > Lista de lo que las pruebas existentes esperan de la interfaz. El rediseño puede cambiar el aspecto, pero **no** estos contratos, salvo los cambios deliberados de la última sección. Si una prueba falla por algo que no está en esa sección, es una regresión: se corrige el código, no la prueba.
 >
-> Se obtuvo leyendo `tests/` y `e2e/` el 2026-09-30. Si una prueba nueva añade un contrato, se agrega aquí en la misma tarea.
+> Se obtuvo leyendo `tests/` y `e2e/` el 2026-09-30 y se actualizó al cerrar la entrega B (2026-10-01). Si una prueba nueva añade un contrato, se agrega aquí en la misma tarea.
 
 ## 1. Testids y atributos
 
@@ -58,7 +58,21 @@ Los textos **nuevos** de la fase 5 (mensaje principal, frase, chip de radar, apr
 |---|---|---|
 | `tests/helpers/ensamble.ts`, `tests/unit/openMeteoEnsemble.test.ts` | T0a (hecha) | La petición pasó a `timezone=auto` + `timeformat=unixtime` |
 | `e2e/pronostico.spec.ts` (sección `@vivo`) | T0b (hecha) | Usa `PARAMETROS_TIEMPO` y comprueba la zona real |
-| `tests/unit/pwaArchivos.test.ts`, `e2e/pwa.spec.ts` (colores y metas) | T5 | `theme_color` y `background_color` aprobados |
-| `e2e/pronostico.spec.ts:45` (`getByRole('img', {name:/próximas horas/})` → `getByRole('list', …)`) | T8 | El carrusel de horas deja de ser una imagen SVG |
-| `e2e/verificacion.spec.ts:133` (celda `Calibrado`) | T12 | El panel de exactitud pasa a un detalle que hay que abrir |
-| `tests/unit/contrasteAvisos.test.ts` (se borra) | T15 | Se reemplaza por `contrasteTokens.test.ts` (ambos temas) |
+| `tests/unit/pwaArchivos.test.ts`, `e2e/pwa.spec.ts` (colores y metas) | T5 (hecha) | `theme_color` y `background_color` aprobados; ahora amarrados a los tokens |
+| `e2e/pronostico.spec.ts` (`getByRole('img', {name:/próximas horas/})` → `getByRole('list', …)`) | T8 (hecha) | El carrusel de horas deja de ser una imagen SVG |
+| `tests/integration/Cielo.test.tsx` (3 → 4 SVG decorativos) | T7 (hecha) | La ilustración del cielo es el cuarto SVG `aria-hidden` |
+| `e2e/verificacion.spec.ts` (celda `Calibrado`) | T12b (hecha) | El panel de exactitud pasó a un detalle que hay que abrir (`Ver detalle de exactitud`) |
+| `tests/unit/contrasteAvisos.test.ts` (borrada) | T15 (hecha) | Reemplazada por `contrasteTokens.test.ts` (ambos temas) |
+| `tests/integration/AppVerificacion.test.tsx` (historial sesgado) | cierre | Espera con `waitFor` el registro asíncrono en vez de leerlo de inmediato (una carrera latente que fallaba bajo carga) |
+
+## 6. Contratos que agregó la Fase 5 (entrega B)
+
+- **Siempre un solo `<h1>SistemaClima</h1>`**: en el cielo cuando hay pronóstico; en `Encabezado` o `EsqueletoCielo` en las demás fases.
+- **`aria-label`s únicos:** `Probabilidad de lluvia actual` (dentro del cielo), `Mapa de radar` (tarjeta del mapa y su esqueleto, nunca juntas), `Estado del radar` (tarjeta sin imagen), `Aprendizaje del pronóstico`, `Tus datos`, `Estado de fuentes`, `Observación de lluvia`, `Panel de Exactitud`, `Buscar ciudad`.
+- **`origen-pop`** existe siempre, visible solo para lectores de pantalla (`Basada en el ensamble de modelos.` / `Combina el radar con el ensamble de modelos.`).
+- **Gotas del carrusel:** `barra-pop-${i}` y `data-radar` van en el `<svg>` de cada gota (con `<title>` como primer hijo); `i` no cuenta los separadores de día. La lista es un `ul` con nombre `Probabilidad de lluvia de las próximas horas` y `tabindex="0"`.
+- **Botones con nombre accesible fijo aunque el texto visible sea corto:** `Exportar historial`, `Borrar historial` (visibles `Exportar`, `Borrar`); `Animar`/`Pausar` (solo ícono, con `aria-pressed`); `Importar historial` es un `<label>` de un `input[type=file]` real.
+- **Detalle de exactitud:** `#detalle-exactitud` es hermano de la tarjeta de aprendizaje, siempre montado con `hidden`; los `exactitud-*` siempre están en el DOM. El botón `Ver detalle de exactitud` lleva `aria-expanded` y `aria-controls`.
+- **Un solo `role="status"`** en todo momento (carga, resultado de «¿Está lloviendo?», gestión del historial, avisos de la PWA); `role="alert"` para errores y fuera de México.
+- **Textos nuevos que no deben chocar** con `Tu ubicación`, `Calibrada con tu historial local (`, `sin cobertura en esta zona`, `Radar RainViewer:`, `Caché:` ni `hacia el este`: el mensaje principal, la frase, el chip, la insignia de avance (`28 km/h al este`), los textos de aprendizaje y las explicaciones de la tarjeta del radar sin imagen.
+- **Diseño:** a 320 px `scrollWidth <= innerWidth` en todos los estados y ambos temas; en escritorio la columna mide ≤ 560 px y está centrada; cero `console.error`.

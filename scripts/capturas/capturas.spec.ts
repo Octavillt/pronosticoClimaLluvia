@@ -1,6 +1,7 @@
 /**
  * Uso: pnpm capturas; CAPTURAS_ETIQUETA=antes pnpm capturas;
- * CAPTURAS_FILTRO='listo-alta__390' pnpm capturas.
+ * CAPTURAS_FILTRO='listo-alta__390' pnpm capturas; CAPTURAS_ANCHOS=360,768 pnpm capturas;
+ * CAPTURAS_OSM_REAL=1 pnpm capturas usa los tiles reales del mapa base.
  * PNG en reportes/.tmp/capturas/<etiqueta>/; reportes/.tmp está ignorado por git.
  */
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
@@ -9,6 +10,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { pixelGlobal } from '../../src/nowcast/tiles';
 import { ensambleFixture, forecastFixture } from '../../tests/helpers/ensamble';
+import { historialVerificacion } from '../../tests/helpers/verificacion';
 import { codificarPng } from '../../tests/helpers/png';
 import {
   cargadorSintetico,
@@ -24,22 +26,24 @@ const ZONA = { timezone: 'America/Mexico_City', offsetS: -21600 };
 const CDMX = { latitude: 19.43, longitude: -99.13 };
 const PUNTO = pixelGlobal({ lat: CDMX.latitude, lon: CDMX.longitude }, ZOOM);
 const TILE_BASE = codificarPng(256, 256, new Uint8Array(256 * 256 * 4).fill(200));
-const ANCHOS = [320, 390, 1280];
+const ANCHOS = process.env.CAPTURAS_ANCHOS?.split(',').map(Number) ?? [320, 390, 1280];
 const TEMAS = ['claro', 'oscuro'] as const;
 const ESTADOS = [
   'listo-alta', 'listo-media', 'listo-baja', 'listo-nula',
   'radar-lluvia', 'radar-desactualizado', 'radar-sin-cobertura',
-  'solicitando', 'error', 'fuera-de-mexico', 'sin-ubicacion', 'busqueda',
+  'solicitando', 'error', 'fuera-de-mexico', 'sin-ubicacion', 'busqueda', 'detalle-abierto',
 ] as const;
 type Estado = (typeof ESTADOS)[number];
 
 const PORCENTAJES: Partial<Record<Estado, number>> = {
-  'listo-alta': 80, 'listo-media': 45, 'listo-baja': 15, 'listo-nula': 0,
+  'listo-alta': 80, 'listo-media': 45, 'listo-baja': 15, 'listo-nula': 0, 'detalle-abierto': 45,
 };
 const DIRECTORIO = join(
   fileURLToPath(new URL('../../reportes/.tmp/capturas/', import.meta.url)),
   process.env.CAPTURAS_ETIQUETA ?? 'actual',
 );
+// Con CAPTURAS_OSM_REAL=1 el mapa base usa tiles reales de OpenStreetMap (requiere internet).
+const OSM_REAL = process.env.CAPTURAS_OSM_REAL === '1';
 const FILTRO = process.env.CAPTURAS_FILTRO ? new RegExp(process.env.CAPTURAS_FILTRO) : null;
 
 function tormentaSobreElPunto(sinCobertura: boolean): EscenaRadar {
@@ -75,11 +79,12 @@ async function prepararUbicacion(page: Page, context: BrowserContext, estado: Es
 }
 
 async function conProveedores(page: Page, estado: Estado): Promise<void> {
-  await page.route('**/*', (ruta) =>
-    new URL(ruta.request().url()).origin === 'http://localhost:4174'
-      ? ruta.continue()
-      : ruta.abort(),
-  );
+  await page.route('**/*', (ruta) => {
+    const { origin, hostname } = new URL(ruta.request().url());
+    const permitido = origin === 'http://localhost:4174'
+      || (OSM_REAL && hostname.endsWith('tile.openstreetmap.org'));
+    return permitido ? ruta.continue() : ruta.abort();
+  });
   await page.route('**/ensemble-api.open-meteo.com/**', async (ruta) => {
     if (estado === 'solicitando') {
       await new Promise<void>((resolve) => setTimeout(resolve, 4_000));
@@ -127,9 +132,11 @@ async function conProveedores(page: Page, estado: Estado): Promise<void> {
       body: codificarPng(tile.ancho, tile.alto, tile.data),
     });
   });
-  await page.route('**/tile.openstreetmap.org/**', (ruta) =>
-    ruta.fulfill({ contentType: 'image/png', body: TILE_BASE }),
-  );
+  if (!OSM_REAL) {
+    await page.route('**/tile.openstreetmap.org/**', (ruta) =>
+      ruta.fulfill({ contentType: 'image/png', body: TILE_BASE }),
+    );
+  }
   await page.route('**/geocoding-api.open-meteo.com/**', (ruta) =>
     ruta.fulfill({
       json: {
@@ -170,6 +177,17 @@ async function esperarEstado(page: Page, estado: Estado): Promise<void> {
       const mostrado = Number.parseInt((await page.getByTestId('pop-ahora').textContent()) ?? '', 10);
       expect(Math.abs(mostrado - (PORCENTAJES[estado] ?? 0))).toBeLessThanOrEqual(4);
     }
+  }
+  if (estado === 'detalle-abierto') {
+    // Un historial de 150 horas deja el horizonte calibrado y llena las tablas y la gráfica.
+    await page.getByLabel('Importar historial').setInputFiles({
+      name: 'historial.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(JSON.stringify(historialVerificacion(150, AHORA.getTime()))),
+    });
+    await expect(page.getByRole('status')).toContainText('Se agregaron');
+    await page.getByRole('button', { name: 'Ver detalle de exactitud' }).click();
+    await expect(page.getByRole('cell', { name: 'Calibrado', exact: true })).toBeVisible();
   }
   if (await page.getByTestId('mapa-radar').count() > 0) {
     await esperarTiles(page);
@@ -262,8 +280,7 @@ for (const estado of ESTADOS) {
         await page.goto('/');
         await esperarEstado(page, estado);
         if (estado === 'radar-lluvia') {
-          await expect(page.locator('time[datetime="2026-10-01T02:00:00.000Z"]')).toHaveText('20:00');
-          await expect(page.locator('time[datetime^="2026-10-01T03:00"]')).toHaveText('21:00 h');
+          await expect(page.locator('.cielo__hora')).toHaveText('Ahora · 20:00 a 21:00 h');
         }
         const captura = await page.screenshot({ path: join(DIRECTORIO, `${nombre}.png`), fullPage: true });
         if (estado === 'radar-lluvia') {

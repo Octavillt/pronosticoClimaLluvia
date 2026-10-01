@@ -309,3 +309,107 @@ dobles en integración, sin interceptar `sw.js` en Playwright.
   el shell ni el último pronóstico indefinidamente. La primera visita necesita red.
 - **Fuera de alcance:** no hay sincronización en segundo plano ni notificaciones push; siguen fuera
   del alcance del proyecto estático.
+
+## 11. Fase 5: UX/UI (Opción B · Cielo)
+
+Rediseño completo de la interfaz, entregado en dos partes. La **entrega A** (huso horario y lógica pura) se
+mergeó antes; esta sección cubre ambas porque comparten decisiones. Las maquetas aprobadas están en el lienzo del
+proyecto; el contrato de lo que las pruebas esperan de la interfaz vive en `docAnalisis/ux-contratos-de-prueba.md`.
+
+### 11.1 Huso horario (defecto de la Fase 1, corregido en la entrega A)
+
+El complemento horario se pedía con `timezone: 'UTC'` y la API responde `"timezone":"GMT"`, así que
+`formatHoraLocal` recibía `GMT` y mostraba horas UTC: a las 20:36 de Ciudad de México la app habría dicho
+«de 02:00 a 03:00 h». Ningún fixture lo detectaba porque devolvían `America/Mexico_City`. Ambos endpoints se
+piden ahora con `timezone=auto&timeformat=unixtime` (verificado con la API real: epoch UTC, el mismo eje horario
+en los dos endpoints y la zona IANA del punto). La zona sale del ensamble; `normalizarZona` solo acepta zonas
+`America/*`; la caché pasó a `pop:v2`. Las pruebas fallan si la petición vuelve a `timezone=UTC`.
+
+### 11.2 Mensaje, frase y chip de radar
+
+Todo se decide sobre el **porcentaje mostrado** (el redondeado), para que el número y el mensaje nunca se
+contradigan (59.6 % se muestra «60 %» y es «Lleva paraguas.»). Cuatro niveles: ≥ 60 % «Lleva paraguas.»,
+30–59 % «Posible lluvia: ten un paraguas a la mano.», 10–29 % «Poco probable que llueva.», < 10 % «No se espera
+lluvia.». La frase de tendencia busca, dentro de las próximas 24 h, la primera hora en que cambia el nivel
+(para bajar exige dos horas seguidas por debajo del umbral) y cita la hora de inicio del intervalo en la zona del
+punto, con sufijo «de mañana» cuando cruza la medianoche local. El chip del radar resume su estado: avance con
+rumbo, hora de la imagen, sin cobertura, desactualizado, consultando o no disponible. Son funciones puras con
+pruebas (`src/utils/lluvia.ts`, `mensajeCielo.ts`, `pildoras.ts`, `aprendizaje.ts`, `dias.ts`).
+
+### 11.3 Tokens, temas y contraste
+
+Toda la interfaz sale de `src/estilos/tokens.css`: 35 tokens de color más espaciado, radios y tipografías. El
+tema claro está en `:root` y el oscuro en **un solo** bloque `@media (prefers-color-scheme: dark)`: el modo
+oscuro es automático, sin interruptor. `contrasteTokens.test.ts` lee ese archivo, resuelve el tema efectivo de
+cada modo y exige ≥ 4.5:1 en los pares de texto y ≥ 3:1 en bordes y elementos gráficos, con guardas contra pasar
+en vacío. Un ajuste respecto de la maqueta: el borde de controles en claro pasó de `#8a8f96` (2.99:1 sobre el
+fondo de la página) a `#838890` (3.27:1). Además `e2e/tema.spec.ts` mide el contraste con los colores
+**renderizados** del navegador (cielo, mensaje, frase, chip, píldoras, botones, tarjetas) en ambos temas.
+
+### 11.4 Arquitectura de estilos y guardarraíles
+
+CSS plano con prefijo por componente (`.cielo__numero`), estados por atributo (`data-nivel`, `data-actual`,
+`hidden`), sin `@layer` ni CSS Modules: Leaflet exige selectores globales y las reglas sin capa ganan a las
+capeadas. `guardarrailesEstilos.test.ts` impide: colores literales fuera de `tokens.css`, `var(--x)` sin
+definir, `style` en TSX que no sea una variable CSS, `outline: none`, `prefers-color-scheme` fuera de
+`tokens.css` y `MapaRadar.css`, `@layer` y CSS de más de 110 columnas. Se construyó con un *ratchet* (lista de
+archivos pendientes que obliga a quitarlos en cuanto cumplen); al cerrar el rediseño las listas quedaron vacías.
+Todo movimiento va dentro de `prefers-reduced-motion: no-preference`; los objetivos táctiles miden al menos 44 px.
+
+### 11.5 Tipografías autoalojadas y PWA
+
+Bricolage Grotesque (variable, ejes `opsz` y `wght`, 700–800; 76 868 B) y Figtree (variable, 400–700; 20 184 B),
+subconjunto latin, en `src/assets/fonts/` con sus `sha256` en `LEEME.md` y la licencia OFL en
+`public/licencias/`. No se pide nada a servidores de tipografías (lo comprueba un E2E) y entran solas al
+precaché del service worker, así que sin conexión se ven igual. Se conservó el eje `opsz` para que el número
+grande use el diseño de exhibición como en la maqueta; sin él el archivo pesaría la mitad. `theme-color` es doble
+(claro/oscuro, con `media`), el manifest y los íconos pasaron al azul del cielo y una prueba amarra esos valores a
+`--color-cielo`. Limitación conocida: el manifest no cambia con el tema, así que la pantalla de arranque de la
+PWA instalada sale clara aunque el sistema esté en oscuro.
+
+### 11.6 Pantalla principal y componentes
+
+De arriba abajo: **cielo** (marca con el único `<h1>`, ubicación, hora, número, mensaje, frase, chip y una
+ilustración SVG decorativa de cuatro estados que cambia de color con los tokens), **próximas horas** (carrusel de
+píldoras con gota que se llena; la hora en curso resaltada y un separador de día), **radar**, **«¿Está lloviendo?»**,
+**aprendizaje** (barra de avance hacia las 150 horas verificadas y un botón que despliega el detalle de exactitud),
+**«Tus datos»** (exportar, importar y borrar el historial), **fuentes** y créditos. El detalle de exactitud queda
+siempre montado dentro de un contenedor `hidden`, así los `data-testid="exactitud-*"` siguen en el DOM; al abrirlo
+son tres tarjetas (resumen, por horizonte y confiabilidad) con tablas que se desplazan dentro de su tarjeta. Sin
+pronóstico hay pantallas propias: esqueleto de carga con la marca real, ubicación no disponible, fuera de México,
+error con «Reintentar» y búsqueda de ciudad. Los avisos de la PWA usan los mismos tokens.
+
+### 11.7 Radar
+
+El mapa mantiene la lógica de Leaflet; cambia el marco: tarjeta con la antigüedad del último fotograma, botón
+circular de animar, deslizador, base con clase `mapa-radar__base` y marcador hecho con tres `circleMarker` con
+clases. **Tema oscuro:** solo la base del mapa se filtra (`invert(1) hue-rotate(180deg) brightness(.95)
+contrast(.9)`); la capa de radar es otra y no se invierte. Se verificó a ojo con tiles reales de OpenStreetMap en
+ambos temas. La **leyenda** usa cuatro tramos cuyos colores se leen de `PALETA_OPACA` (20, 30, 40 y 50 dBZ:
+`#00a3e0`, `#005588`, `#ffaa00` y `#c10000`), no los inventados en la maqueta, y no muestra números de dBZ. La
+**insignia de avance** («28 km/h al este», con una flecha rotada al rumbo) vive fuera del `div` de Leaflet.
+Sin cobertura o con la imagen desactualizada se muestra una tarjeta con una ilustración fija del mapa y la
+explicación, sin cargar Leaflet.
+
+### 11.8 Pruebas añadidas
+
+`contrasteTokens`, `guardarrailesEstilos`, `pwaArchivos` (amarra colores y metas a los tokens), pruebas de
+integración por componente y, en E2E, `tema.spec.ts` (fondo por tema, filtro del mapa, contraste renderizado, foco
+visible, movimiento reducido y fuentes propias) y `responsivo.spec.ts` (320 px sin desbordamiento ni
+`console.error` en seis estados y ambos temas, columna de 560 px en escritorio, texto al 200 %), más aserciones de
+fuentes sin conexión en `pwa.spec.ts`. Los cambios deliberados de pruebas existentes están listados en la sección 5
+del contrato de pruebas de la interfaz.
+
+### 11.9 Límites conocidos
+
+- **Navegadores:** todo se verificó en Chromium (headless y con ventana). Safari y Firefox no se probaron; el
+  foco del botón de importar usa `:has()` (Safari 15.4+, Firefox 121+) y `text-wrap: balance` degrada sin romper.
+- **No implementado de la maqueta:** la elipse punteada «en 30 min» del mapa, porque la app no calcula esa
+  proyección; y los cuadritos de la leyenda siguen la paleta real (azules, naranja y rojo), no la escala de la maqueta.
+- **Tamaños de letra en píxeles:** respetan el zoom del navegador (se probó a 200 %), pero no el ajuste del
+  tamaño de letra predeterminado del sistema.
+- **Radar y base en oscuro:** el filtro de la base es una aproximación; las etiquetas y colores de OpenStreetMap
+  cambian de tono y no se garantiza fidelidad en otras regiones o zooms.
+- **Detalle de exactitud:** con pocas horas el panel muestra métricas con muestra pequeña, y no se ve hasta que se
+  abre; los textos de aprendizaje de cada estado son nuevos y no estaban en el catálogo aprobado.
+- Sigue pendiente la instalación en un dispositivo real y el despliegue en Hostinger (ver 10.5).

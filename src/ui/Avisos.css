@@ -1,0 +1,46 @@
+/* Avisos de la PWA: versión nueva disponible y falta de conexión. */
+
+.aviso {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-2);
+  padding: var(--espacio-3) var(--espacio-4);
+  border-radius: 16px;
+  font-size: 15px;
+  line-height: 22px;
+}
+
+.aviso--actualizacion {
+  background: var(--color-aviso-fondo);
+  color: var(--color-aviso-texto);
+}
+
+.aviso--sin-conexion {
+  background: var(--color-sin-conexion-fondo);
+  color: var(--color-sin-conexion-texto);
+}
+
+.aviso__texto {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-2);
+}
+
+.aviso__icono {
+  flex-shrink: 0;
+}
+
+.aviso__boton {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: var(--radio-control-chico);
+  background: var(--color-aviso-boton-fondo);
+  color: var(--color-aviso-boton-texto);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}

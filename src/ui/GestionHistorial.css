@@ -1,0 +1,77 @@
+.datos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+}
+
+.datos__titulo {
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 700;
+  color: var(--color-texto-suave);
+  margin: 0;
+}
+
+.datos__botones {
+  display: flex;
+  gap: var(--espacio-2);
+}
+
+.datos__botones > .boton {
+  flex: 1;
+  min-width: 0;
+  padding: 0 var(--espacio-2);
+  gap: 6px;
+}
+
+.datos__icono {
+  flex-shrink: 0;
+}
+
+.datos__importar {
+  position: relative;
+}
+
+.datos__importar:has(input:focus-visible) {
+  outline: 3px solid var(--color-primario);
+  outline-offset: 2px;
+}
+
+.datos__importar:has(input:disabled) {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.datos__nota {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--color-texto-suave);
+  margin: var(--espacio-1) 0 0;
+}
+
+.datos__confirmacion {
+  padding: var(--espacio-3);
+  border-radius: var(--radio-tarjeta);
+  background: var(--color-error-fondo);
+  color: var(--color-error-texto);
+  margin-top: var(--espacio-2);
+}
+
+.datos__peligro {
+  color: var(--color-error-texto);
+  border-color: var(--color-error-texto);
+}
+
+.datos__mensaje {
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--color-texto-suave);
+  margin: 0;
+}
+
+.datos__mensaje--error {
+  color: var(--color-error-texto);
+  background: var(--color-error-fondo);
+  padding: var(--espacio-2) var(--espacio-3);
+  border-radius: 12px;
+}

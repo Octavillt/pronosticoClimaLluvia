@@ -1,4 +1,5 @@
-import { useState, type CSSProperties } from 'react';
+import { useState } from 'react';
+import './BotonLluvia.css';
 
 interface Props {
   disponible: boolean;
@@ -6,8 +7,6 @@ interface Props {
   lugar: string | null;
   registrarObservacionUsuario: (lluvia: boolean) => Promise<boolean>;
 }
-
-const boton: CSSProperties = { minHeight: 44, padding: '8px 12px' };
 
 export function BotonLluvia({ disponible, cargando = false, lugar, registrarObservacionUsuario }: Props) {
   const [guardando, setGuardando] = useState(false);
@@ -29,25 +28,25 @@ export function BotonLluvia({ disponible, cargando = false, lugar, registrarObse
   };
 
   return (
-    <section aria-label="Observación de lluvia" style={{ margin: '16px 0' }}>
-      <h2 style={{ fontSize: '1rem' }}>
+    <section aria-label="Observación de lluvia" className="tarjeta lluvia">
+      <h2 className="lluvia__titulo">
         {lugar === null ? '¿Está lloviendo?' : `¿Está lloviendo en ${lugar}?`}
       </h2>
-      {lugar !== null && (
-        <p style={{ fontSize: '0.85rem' }}>
-          Reporta solo lo que ves donde estás: estos reportes calibran el pronóstico de este lugar.
-        </p>
-      )}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+      <p className="lluvia__subtitulo">
+        {lugar !== null
+          ? 'Reporta solo lo que ves donde estás: estos reportes calibran el pronóstico de este lugar.'
+          : 'Tus respuestas hacen más exacto el pronóstico aquí.'}
+      </p>
+      <div className="lluvia__botones">
         <button
-          style={boton}
+          className="boton boton--primario"
           disabled={!disponible || cargando || guardando}
           onClick={() => void registrar(true)}
         >
           Sí, está lloviendo
         </button>
         <button
-          style={boton}
+          className="boton boton--secundario"
           disabled={!disponible || cargando || guardando}
           onClick={() => void registrar(false)}
         >
@@ -55,12 +54,14 @@ export function BotonLluvia({ disponible, cargando = false, lugar, registrarObse
         </button>
       </div>
       {!disponible ? (
-        <p>El almacenamiento local no está disponible; no se pueden registrar observaciones.</p>
+        <p className="lluvia__mensaje">
+          El almacenamiento local no está disponible; no se pueden registrar observaciones.
+        </p>
       ) : cargando ? (
-        <p>Cargando historial local…</p>
+        <p className="lluvia__mensaje">Cargando historial local…</p>
       ) : (
         registrado !== null && (
-          <p role="status">
+          <p className="lluvia__mensaje" role="status">
             {registrado
               ? 'Gracias, registrado.'
               : 'No se registró: ya hay una observación en este instante ' +
@@ -68,7 +69,7 @@ export function BotonLluvia({ disponible, cargando = false, lugar, registrarObse
           </p>
         )
       )}
-      {error && disponible && <p role="alert">{error}</p>}
+      {error && disponible && <p className="lluvia__mensaje lluvia__mensaje--error" role="alert">{error}</p>}
     </section>
   );
 }

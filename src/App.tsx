@@ -1,5 +1,4 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
-import { config } from './config';
 import type {
   EstadoRadar,
   GeoPoint,
@@ -16,16 +15,24 @@ import type { ControladorPwa } from './pwa/registro';
 import { useActualizacionPwa } from './pwa/useActualizacionPwa';
 import { useEnLinea } from './pwa/useEnLinea';
 import { AvisoActualizacion } from './ui/AvisoActualizacion';
+import { Aprendizaje } from './ui/Aprendizaje';
 import { AvisoSinConexion } from './ui/AvisoSinConexion';
-import { BuscadorCiudad } from './ui/BuscadorCiudad';
 import { BotonLluvia } from './ui/BotonLluvia';
+import { Cielo } from './ui/Cielo';
+import { Encabezado } from './ui/Encabezado';
+import { ErrorPronostico } from './ui/ErrorPronostico';
+import { EsqueletoCielo } from './ui/EsqueletoCielo';
 import { EstadoFuentes } from './ui/EstadoFuentes';
-import { LineaDeHoras } from './ui/LineaDeHoras';
-import { ProbabilidadAhora } from './ui/ProbabilidadAhora';
-import { PanelExactitud } from './ui/PanelExactitud';
-import { UbicacionActual } from './ui/UbicacionActual';
+import { GestionHistorial } from './ui/GestionHistorial';
+import { ProximasHoras } from './ui/ProximasHoras';
+import { RadarEsqueleto } from './ui/RadarEsqueleto';
+import { SinUbicacion } from './ui/SinUbicacion';
+import { RadarEstado } from './ui/RadarEstado';
 import { useVerificacion } from './ui/useVerificacion';
 import { indiceHoraEnCurso, MS_HORA } from './utils/horas';
+import { resumirCielo } from './utils/mensajeCielo';
+import { progresoAprendizaje } from './utils/aprendizaje';
+import './App.css';
 
 // Leaflet pesa bastante: solo se descarga cuando hay radar que mostrar.
 const MapaRadar = lazy(() => import('./ui/MapaRadar'));
@@ -34,7 +41,6 @@ type Fase = 'solicitando' | 'sin-ubicacion' | 'fuera-mexico' | 'error' | 'listo'
 
 const REFRESCO_RADAR_MS = 5 * 60_000;
 const REFRESCO_RELOJ_MS = 60_000;
-const PESO_RADAR_VISIBLE = 0.05;
 
 export default function App({ controladorPwa = null }: { controladorPwa?: ControladorPwa | null }) {
   const hayActualizacion = useActualizacionPwa(controladorPwa);
@@ -46,6 +52,7 @@ export default function App({ controladorPwa = null }: { controladorPwa?: Contro
     null,
   );
   const [mensajeError, setMensajeError] = useState<string | null>(null);
+  const [ubicacionFallida, setUbicacionFallida] = useState(false);
   const [radar, setRadar] = useState<EstadoRadar>({ estado: 'cargando' });
   const [nowcast, setNowcast] = useState<Nowcast | null>(null);
   const [indiceRadar, setIndiceRadar] = useState<IndiceRadar | null>(null);
@@ -54,6 +61,7 @@ export default function App({ controladorPwa = null }: { controladorPwa?: Contro
   const cargar = useCallback(async (destino: GeoPoint, nombre: string | null) => {
     setFase('solicitando');
     setMensajeError(null);
+    setUbicacionFallida(false);
     setNowcast(null);
     setIndiceRadar(null);
     setPunto(destino);
@@ -73,15 +81,19 @@ export default function App({ controladorPwa = null }: { controladorPwa?: Contro
   }, []);
 
   const usarGeolocalizacion = useCallback(() => {
-    if (!navigator.geolocation) {
+    const sinUbicacion = () => {
+      setUbicacionFallida(true);
       setFase('sin-ubicacion');
+    };
+    if (!navigator.geolocation) {
+      sinUbicacion();
       return;
     }
     setFase('solicitando');
     navigator.geolocation.getCurrentPosition(
       (posicion) =>
         void cargar({ lat: posicion.coords.latitude, lon: posicion.coords.longitude }, null),
-      () => setFase('sin-ubicacion'),
+      sinUbicacion,
     );
   }, [cargar]);
 
@@ -182,58 +194,100 @@ export default function App({ controladorPwa = null }: { controladorPwa?: Contro
     [resultado, mezcla, ahoraMs, verificacion.calibracion],
   );
 
-  const horasVerificadasEnCurso = useMemo(() => {
+  const horizonteH = useMemo(() => {
     if (!resultado) {
       return null;
     }
-    const horizonteH = horizonteDe(
+    return horizonteDe(
       (Date.parse(resultado.horasUtc[horaEnCurso]) - ahoraMs) / MS_HORA,
     );
-    return horizonteH === null ? null : (verificacion.calibracion[horizonteH]?.n ?? null);
-  }, [resultado, horaEnCurso, ahoraMs, verificacion.calibracion]);
+  }, [resultado, horaEnCurso, ahoraMs]);
+  const horasVerificadasEnCurso = horizonteH === null
+    ? null : (verificacion.calibracion[horizonteH]?.n ?? null);
+  const progreso = useMemo(
+    () => progresoAprendizaje(verificacion.resumen, verificacion.disponible, horizonteH),
+    [verificacion.resumen, verificacion.disponible, horizonteH],
+  );
+
+  const resumen = useMemo(
+    () => resultado && mezcla && popMostrada ? resumirCielo({
+      horasUtc: resultado.horasUtc,
+      pop: popMostrada,
+      pesoRadar: mezcla.pesoRadar,
+      indice: horaEnCurso,
+      ahoraMs,
+      timezone: resultado.timezone,
+      radar,
+    }) : null,
+    [resultado, mezcla, popMostrada, horaEnCurso, ahoraMs, radar],
+  );
 
   return (
-    <main style={{ fontFamily: 'system-ui, sans-serif', maxWidth: 720, margin: '0 auto', padding: 16 }}>
+    <main className="app">
       <AvisoActualizacion
         visible={hayActualizacion}
         onActualizar={() => controladorPwa?.activar()}
       />
       <AvisoSinConexion enLinea={enLinea} />
-      <h1>{config.appName}</h1>
-
-      {fase === 'solicitando' && <p role="status">Obteniendo pronóstico…</p>}
+      {fase === 'solicitando' && <EsqueletoCielo />}
 
       {(fase === 'sin-ubicacion' || fase === 'fuera-mexico') && (
         <>
-          {fase === 'fuera-mexico' && (
-            <p role="alert">Esta ubicación está fuera de México. Elige una ciudad mexicana.</p>
-          )}
-          <button onClick={usarGeolocalizacion}>Usar mi ubicación</button>
-          <BuscadorCiudad onElegir={(p, nombre) => void cargar(p, nombre)} />
+          <Encabezado />
+          <SinUbicacion
+            fueraDeMexico={fase === 'fuera-mexico'}
+            ubicacionFallida={ubicacionFallida}
+            onUsarUbicacion={usarGeolocalizacion}
+            onElegir={(p, nombre) => void cargar(p, nombre)}
+          />
         </>
       )}
 
       {fase === 'error' && (
-        <section>
-          <p role="alert">No se pudo obtener el pronóstico: {mensajeError}</p>
-          <button onClick={() => punto && void cargar(punto, nombreLugar)}>Reintentar</button>
-        </section>
+        <>
+          <Encabezado />
+          <ErrorPronostico
+            mensaje={mensajeError ?? ''}
+            onReintentar={() => punto && void cargar(punto, nombreLugar)}
+          />
+        </>
       )}
 
-      {fase === 'listo' && resultado && mezcla && popMostrada && punto && (
+      {fase === 'listo' && resultado && mezcla && popMostrada && punto && resumen && (
         <>
-          <UbicacionActual
+          <Cielo
             punto={punto}
             nombre={nombreLugar}
-            onCambiar={() => setFase('sin-ubicacion')}
-          />
-          <ProbabilidadAhora
-            pop={popMostrada[horaEnCurso]}
-            horaUtc={resultado.horasUtc[horaEnCurso]}
-            timezone={resultado.timezone}
-            conRadar={mezcla.pesoRadar[horaEnCurso] > PESO_RADAR_VISIBLE}
+            resumen={resumen}
             horasVerificadas={horasVerificadasEnCurso}
+            onCambiar={() => {
+              setUbicacionFallida(false);
+              setFase('sin-ubicacion');
+            }}
           />
+          <ProximasHoras
+            horasUtc={resultado.horasUtc}
+            pop={popMostrada}
+            pesoRadar={mezcla.pesoRadar}
+            desde={horaEnCurso}
+            ahoraMs={ahoraMs}
+            timezone={resultado.timezone}
+          />
+          {radar.estado === 'ok' && indiceRadar && (
+            <Suspense fallback={<RadarEsqueleto />}>
+              <MapaRadar
+                punto={punto}
+                nombre={nombreLugar}
+                indice={indiceRadar}
+                timezone={resultado.timezone}
+                ahoraMs={ahoraMs}
+                avance={radar.estado === 'ok' ? radar.avance : null}
+              />
+            </Suspense>
+          )}
+          {(radar.estado === 'sin-cobertura' || radar.estado === 'desactualizado') && (
+            <RadarEstado estado={radar} />
+          )}
           <BotonLluvia
             key={`${punto.lat}|${punto.lon}`}
             disponible={verificacion.disponible}
@@ -241,24 +295,15 @@ export default function App({ controladorPwa = null }: { controladorPwa?: Contro
             cargando={verificacion.resumen === null}
             registrarObservacionUsuario={verificacion.registrarObservacionUsuario}
           />
-          <LineaDeHoras
-            horasUtc={resultado.horasUtc}
-            pop={popMostrada}
-            pesoRadar={mezcla.pesoRadar}
-            desde={horaEnCurso}
-            timezone={resultado.timezone}
-          />
-          {radar.estado === 'ok' && indiceRadar && (
-            <Suspense fallback={<p role="status">Cargando mapa del radar…</p>}>
-              <MapaRadar
-                punto={punto}
-                nombre={nombreLugar}
-                indice={indiceRadar}
-                timezone={resultado.timezone}
-              />
-            </Suspense>
-          )}
-          <PanelExactitud
+          <Aprendizaje progreso={progreso} observaciones={verificacion.resumen?.observaciones ?? null}
+            panel={{
+              resumen: verificacion.resumen,
+              disponible: verificacion.disponible,
+              exportar: verificacion.exportar,
+              importar: verificacion.importar,
+              borrar: verificacion.borrar,
+            }} />
+          <GestionHistorial
             resumen={verificacion.resumen}
             disponible={verificacion.disponible}
             exportar={verificacion.exportar}
@@ -266,7 +311,7 @@ export default function App({ controladorPwa = null }: { controladorPwa?: Contro
             borrar={verificacion.borrar}
           />
           <EstadoFuentes fuentes={resultado.fuentes} radar={radar} timezone={resultado.timezone} />
-          <p style={{ fontSize: '0.8rem' }}>
+          <p className="app__creditos">
             Datos: Open-Meteo, radar de RainViewer y mapa © OpenStreetMap.
           </p>
         </>

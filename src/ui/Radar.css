@@ -1,0 +1,217 @@
+.radar {
+  padding: var(--espacio-3);
+  overflow: hidden;
+}
+
+.radar__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 28px;
+}
+
+.radar__titulo {
+  font-family: var(--fuente-titulos);
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.radar__antiguedad {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  padding: var(--espacio-1) 10px;
+  border-radius: var(--radio-completo);
+  background: var(--color-accion-suave);
+  color: var(--color-accion-texto);
+}
+
+.radar__mapa,
+.radar__esqueleto {
+  height: 210px;
+  border-radius: 16px;
+  overflow: hidden;
+  isolation: isolate;
+  width: 100%;
+}
+
+.radar__esqueleto {
+  margin-top: 10px;
+  background: var(--color-pista);
+}
+
+.radar__lienzo {
+  position: relative;
+  margin-top: 10px;
+}
+
+.radar__leyenda {
+  display: flex;
+  align-items: center;
+  gap: var(--espacio-2);
+  margin-top: 10px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--color-texto-suave);
+}
+
+.radar__tramos {
+  display: flex;
+  gap: 2px;
+}
+
+.radar__tramo {
+  --tramo: var(--color-pista);
+  width: 24px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--tramo);
+}
+
+.radar__avance {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: var(--radio-completo);
+  background: var(--color-tarjeta);
+  border: 1px solid var(--color-linea-control);
+  color: var(--color-texto);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.radar__flecha {
+  --giro: 0deg;
+  flex-shrink: 0;
+  transform: rotate(var(--giro));
+}
+
+.radar__controles {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.radar__animar {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--color-cielo);
+  color: var(--color-sobre-cielo);
+  border: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.radar__fotograma {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  accent-color: var(--color-primario);
+  height: 44px;
+}
+
+.radar__hora {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.radar__reciente {
+  font-size: 12px;
+  color: var(--color-texto-suave);
+  margin: var(--espacio-1) 0 0;
+  text-align: right;
+}
+
+.radar__antiguedad--neutra {
+  background: var(--color-pista);
+  color: var(--color-texto-suave);
+}
+
+.radar__ilustracion {
+  margin-top: 10px;
+  height: 170px;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.radar__ilustracion > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.radar__mapa-fondo {
+  fill: var(--color-mapa-fondo);
+}
+
+.radar__mapa-parque {
+  fill: var(--color-mapa-parque);
+}
+
+.radar__mapa-agua {
+  fill: var(--color-mapa-agua);
+}
+
+.radar__mapa-rejilla {
+  stroke: var(--color-mapa-rejilla);
+  stroke-width: 2px;
+}
+
+.radar__mapa-calle {
+  fill: none;
+  stroke: var(--color-mapa-calle);
+  stroke-width: 6px;
+  stroke-linecap: round;
+}
+
+.radar__ubicacion-halo {
+  fill: none;
+  stroke: var(--color-primario);
+  stroke-width: 2px;
+  stroke-opacity: 0.45;
+}
+
+.radar__ubicacion-borde {
+  fill: var(--color-sobre-cielo);
+}
+
+.radar__ubicacion-centro {
+  fill: var(--color-primario);
+}
+
+.radar__explicacion {
+  margin: 10px 0 0;
+  display: flex;
+  gap: var(--espacio-2);
+  align-items: flex-start;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--color-texto-suave);
+}
+
+.radar__advertencia {
+  flex-shrink: 0;
+}
+
+/* Con más ancho el mapa gana altura. */
+@media (min-width: 600px) {
+  .radar__mapa,
+  .radar__esqueleto {
+    height: 260px;
+  }
+}
