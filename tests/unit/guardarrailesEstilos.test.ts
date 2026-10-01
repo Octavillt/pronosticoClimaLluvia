@@ -47,7 +47,8 @@ function primerEstiloInvalido(contenido: string): string | undefined {
     }
     const inicioObjeto = valor.indexOf('{', 1);
     const objeto = leerObjeto(valor.slice(inicioObjeto));
-    const valido = objeto && /^\s*\}/.test(valor.slice(inicioObjeto + objeto.fin))
+    const cierre = /^\s*(?:as\s+CSSProperties(?:\s*&\s*Record<\s*`--\$\{string\}`\s*,\s*string\s*>)?\s*)?\}/;
+    const valido = objeto && cierre.test(valor.slice(inicioObjeto + objeto.fin))
       && objeto.propiedades.every((propiedad) => /^(['"])--[\w-]+\1\s*:\s*\S/.test(propiedad.trim()));
     if (!valido) {
       return `${atributo[0]}${valor.slice(0, inicioObjeto + (objeto?.fin ?? 80) + 1)}`;
@@ -149,6 +150,23 @@ describe('autopruebas de los verificadores de estilos', () => {
 
   test("acepta style={{ '--ancho': '40px' }}", () => {
     expect(primerEstiloInvalido("<div style={{ '--ancho': '40px' }} />")).toBeUndefined();
+  });
+
+  test.each([
+    "style={{ '--tramo': x } as CSSProperties}",
+    "style={{ '--tramo': x } as CSSProperties & Record<`--${string}`, string>}",
+  ])('acepta variables CSS con aserción de tipo: %s', (atributo) => {
+    expect(primerEstiloInvalido(`<div ${atributo} />`)).toBeUndefined();
+  });
+
+  test.each([
+    "style={{ color: 'red' } as CSSProperties}",
+    "style={{ '--tramo': x, color: 'red' } as CSSProperties}",
+    'style={variable as CSSProperties}',
+    "style={{ '--tramo': x } as desconocido}",
+    "style={{ '--tramo': x } as CSSProperties || variable}",
+  ])('rechaza aserciones que eluden la regla: %s', (atributo) => {
+    expect(primerEstiloInvalido(`<div ${atributo} />`)).toBeDefined();
   });
 
   test('el recorrido incluye tokens y componentes', () => {

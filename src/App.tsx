@@ -259,6 +259,7 @@ export default function App({ controladorPwa = null }: { controladorPwa?: Contro
                 indice={indiceRadar}
                 timezone={resultado.timezone}
                 ahoraMs={ahoraMs}
+                avance={radar.estado === 'ok' ? radar.avance : null}
               />
             </Suspense>
           )}

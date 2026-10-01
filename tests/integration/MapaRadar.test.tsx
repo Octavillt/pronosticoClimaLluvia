@@ -1,7 +1,9 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 import type { IndiceRadar } from '../../src/domain/types';
+import { TRAMOS_LEYENDA } from '../../src/nowcast/leyenda';
 import MapaRadar from '../../src/ui/MapaRadar';
+import { NBSP } from '../../src/utils/lluvia';
 
 const PUNTO = { lat: 19.43, lon: -99.13 };
 /** 03:06, 03:16 y 03:26 UTC = 21:06, 21:16 y 21:26 en CDMX. */
@@ -156,4 +158,50 @@ describe('MapaRadar', () => {
     expect(screen.queryByRole('status')).toBeNull();
     expect(screen.queryByRole('alert')).toBeNull();
   });
+  test('la leyenda accesible tiene cuatro colores de la paleta sin números de dBZ visibles', () => {
+    render(<MapaRadar punto={PUNTO} nombre={null} indice={indice()} timezone="America/Mexico_City" />);
+    const leyenda = screen.getByRole('group', { name: 'Intensidad de la lluvia, de ligera a intensa' });
+    const tramos = leyenda.querySelectorAll<HTMLElement>('.radar__tramo');
+    expect(tramos).toHaveLength(4);
+    TRAMOS_LEYENDA.forEach((tramo, i) => {
+      expect(tramos[i].style.getPropertyValue('--tramo')).toBe(tramo.color);
+      expect(tramos[i].title).toBe(tramo.etiqueta);
+    });
+    expect(leyenda.querySelector('.radar__tramos')?.getAttribute('aria-hidden')).toBe('true');
+    expect(screen.getByText('Ligera')).toBeTruthy();
+    expect(screen.getByText('Intensa')).toBeTruthy();
+    expect(screen.queryByText('Moderada')).toBeNull();
+    expect(screen.queryByText('Fuerte')).toBeNull();
+    expect(leyenda.textContent).not.toMatch(/\d|dBZ/i);
+    expect(leyenda.querySelector('ul, ol')).toBeNull();
+  });
+
+  test.each([[90, 'este', '0deg'], [0, 'norte', '-90deg']])(
+    'la insignia a %s grados muestra rumbo %s y giro %s fuera del mapa', (haciaGrados, rumbo, giro) => {
+      render(<MapaRadar punto={PUNTO} nombre={null} indice={indice()} timezone="America/Mexico_City"
+        avance={{ kmh: 28.4, haciaGrados }} />);
+      const texto = `28${NBSP}km/h al ${rumbo}`;
+      const insignia = screen.getByText(texto, { normalizer: (valor) => valor.trim() });
+      const flecha = insignia.querySelector<SVGElement>('.radar__flecha');
+      expect(flecha?.style.getPropertyValue('--giro')).toBe(giro);
+      expect(flecha?.getAttribute('aria-hidden')).toBe('true');
+      expect(flecha?.querySelector('path')?.getAttribute('d')).toBe('M4 12h15M13 6l6 6-6 6');
+      const mapa = screen.getByTestId('mapa-radar');
+      expect(mapa.contains(insignia)).toBe(false);
+      expect(insignia.parentElement).toBe(mapa.parentElement);
+      expect(insignia.textContent).not.toMatch(/Radar RainViewer|Tu ubicación|avanza a/);
+      expect(screen.getAllByText(/más reciente/)).toHaveLength(1);
+      expect(screen.getByTestId('hora-fotograma').textContent).toBe('21:26 h');
+      expect(screen.queryByRole('status')).toBeNull();
+      expect(screen.queryByRole('alert')).toBeNull();
+    },
+  );
+
+  test.each([null, { kmh: 0.4, haciaGrados: 90 }])(
+    'no muestra insignia sin avance apreciable: %j', (avance) => {
+      const { container } = render(<MapaRadar punto={PUNTO} nombre={null} indice={indice()}
+        timezone="America/Mexico_City" avance={avance} />);
+      expect(container.querySelector('.radar__avance')).toBeNull();
+    },
+  );
 });

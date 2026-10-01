@@ -1,10 +1,13 @@
 import { circleMarker, map as crearMapa, tileLayer, type Map as MapaLeaflet, type TileLayer } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { config } from '../config';
 import type { GeoPoint, IndiceRadar } from '../domain/types';
+import { TRAMOS_LEYENDA } from '../nowcast/leyenda';
 import { plantillaTilesMapa } from '../providers/rainviewer';
 import { formatHoraLocal } from '../utils/localTime';
+import { NBSP } from '../utils/lluvia';
+import { nombreRumbo } from '../utils/rumbo';
 import './Radar.css';
 import './MapaRadar.css';
 
@@ -14,13 +17,16 @@ interface Props {
   indice: IndiceRadar;
   timezone: string;
   ahoraMs?: number;
+  avance?: { kmh: number; haciaGrados: number } | null;
 }
 
 const OPACIDAD_RADAR = 0.7;
 const PASO_ANIMACION_MS = 700;
 const ZOOM_MAPA_MAXIMO = 10;
 
-export default function MapaRadar({ punto, nombre, indice, timezone, ahoraMs = Date.now() }: Props) {
+export default function MapaRadar({
+  punto, nombre, indice, timezone, ahoraMs = Date.now(), avance = null,
+}: Props) {
   const contenedor = useRef<HTMLDivElement>(null);
   const capas = useRef(new Map<string, TileLayer>());
   const [mapa, setMapa] = useState<MapaLeaflet | null>(null);
@@ -128,6 +134,7 @@ export default function MapaRadar({ punto, nombre, indice, timezone, ahoraMs = D
   const hora = formatHoraLocal(new Date(frameActual.tiempoS * 1000).toISOString(), timezone);
   const ultimoFotogramaMs = frames[frames.length - 1].tiempoS * 1000;
   const antiguedadMin = Math.max(1, Math.round((ahoraMs - ultimoFotogramaMs) / 60_000));
+  const kmh = avance ? Math.round(avance.kmh) : 0;
 
   return (
     <section className="tarjeta radar" aria-label="Mapa de radar">
@@ -135,7 +142,33 @@ export default function MapaRadar({ punto, nombre, indice, timezone, ahoraMs = D
         <h2 className="radar__titulo">Radar</h2>
         <span className="radar__antiguedad">Hace {antiguedadMin} min</span>
       </div>
-      <div className="radar__mapa" ref={contenedor} data-testid="mapa-radar" />
+      <div className="radar__lienzo">
+        <div className="radar__mapa" ref={contenedor} data-testid="mapa-radar" />
+        {avance && kmh >= 1 && (
+          <div className="radar__avance">
+            <svg
+              className="radar__flecha" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"
+              fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+              style={{
+                '--giro': `${avance.haciaGrados - 90}deg`,
+              } as CSSProperties & Record<`--${string}`, string>}
+            >
+              <path d="M4 12h15M13 6l6 6-6 6" />
+            </svg>
+            {`${kmh}${NBSP}km/h al ${nombreRumbo(avance.haciaGrados)}`}
+          </div>
+        )}
+      </div>
+      <div className="radar__leyenda" role="group" aria-label="Intensidad de la lluvia, de ligera a intensa">
+        <span>Ligera</span>
+        <div className="radar__tramos" aria-hidden="true">
+          {TRAMOS_LEYENDA.map((tramo) => (
+            <span className="radar__tramo" key={tramo.clave} title={tramo.etiqueta}
+              style={{ '--tramo': tramo.color } as CSSProperties & Record<`--${string}`, string>} />
+          ))}
+        </div>
+        <span>Intensa</span>
+      </div>
       <div className="radar__controles">
         <button
           className="radar__animar" type="button" onClick={() => setAnimando((a) => !a)}
