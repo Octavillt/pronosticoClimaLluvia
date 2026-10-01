@@ -1,11 +1,13 @@
-import { useState, type CSSProperties, type ChangeEvent } from 'react';
+import type { CSSProperties } from 'react';
 import { config } from '../config';
 import { etiquetaHorizonte, type ResumenExactitud } from '../services/verificacion';
 import type { EstadoVerificacion } from './useVerificacion';
+import { GestionHistorial } from './GestionHistorial';
 
-type Props = Pick<EstadoVerificacion, 'resumen' | 'disponible' | 'exportar' | 'importar' | 'borrar'>;
+type Props = Pick<EstadoVerificacion, 'resumen' | 'disponible' | 'exportar' | 'importar' | 'borrar'> & {
+  conGestion?: boolean;
+};
 
-const boton: CSSProperties = { minHeight: 44, padding: '8px 12px' };
 const tabla: CSSProperties = {
   width: '100%',
   tableLayout: 'fixed',
@@ -14,18 +16,8 @@ const tabla: CSSProperties = {
 };
 const nota: CSSProperties = { fontSize: '0.85rem' };
 const contador: CSSProperties = { margin: 0 };
-const acciones: CSSProperties = { display: 'flex', flexWrap: 'wrap', gap: 8 };
 const porcentaje = (p: number) => `${Math.round(p * 100)} %`;
 const puntaje = (b: number) => b.toFixed(3);
-
-function leerArchivo(archivo: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const lector = new FileReader();
-    lector.onload = () => resolve(String(lector.result));
-    lector.onerror = () => reject(new Error('No se pudo leer el archivo.'));
-    lector.readAsText(archivo);
-  });
-}
 
 function ContadoresExactitud({ resumen }: { resumen: ResumenExactitud }) {
   return (
@@ -226,118 +218,7 @@ function DiagramaConfiabilidad({ cajas }: { cajas: ResumenExactitud['confiabilid
   );
 }
 
-function GestionHistorial({ resumen, disponible, exportar, importar, borrar }: Props) {
-  const [ocupado, setOcupado] = useState(false);
-  const [confirmarBorrado, setConfirmarBorrado] = useState(false);
-  const [mensaje, setMensaje] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const deshabilitado = !disponible || !resumen || ocupado;
-
-  const ejecutar = async (accion: () => Promise<void>) => {
-    setOcupado(true);
-    setMensaje(null);
-    setError(null);
-    try {
-      await accion();
-    } catch (motivo) {
-      setError(motivo instanceof Error ? motivo.message : 'No se pudo completar la operación.');
-    } finally {
-      setOcupado(false);
-    }
-  };
-
-  const descargar = () =>
-    ejecutar(async () => {
-      const json = await exportar();
-      const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
-      const enlace = document.createElement('a');
-      enlace.href = url;
-      enlace.download = `sistemaclima-verificacion-${new Date().toISOString().slice(0, 10)}.json`;
-      document.body.append(enlace);
-      try {
-        enlace.click();
-        setMensaje('Historial exportado.');
-      } finally {
-        enlace.remove();
-        // El navegador inicia la descarga antes de liberar el contenido del enlace.
-        setTimeout(() => URL.revokeObjectURL(url), 0);
-      }
-    });
-
-  const cargarArchivo = (evento: ChangeEvent<HTMLInputElement>) => {
-    const archivo = evento.target.files?.[0];
-    evento.target.value = '';
-    if (!archivo) {
-      return;
-    }
-    void ejecutar(async () => {
-      const texto = await leerArchivo(archivo);
-      let datos: unknown;
-      try {
-        datos = JSON.parse(texto);
-      } catch {
-        throw new Error('El archivo no es JSON válido.');
-      }
-      const nuevos = await importar(datos);
-      setMensaje(`Se agregaron ${nuevos.predicciones} predicciones y ${nuevos.observaciones} observaciones.`);
-    });
-  };
-
-  return (
-    <>
-      <h3>Tu historial local</h3>
-      <p style={nota}>
-        Exporta una copia de vez en cuando: Safari/iOS puede borrar IndexedDB tras unos 7 días sin uso.
-        El historial pertenece a este navegador y dispositivo.
-      </p>
-      <div style={{ ...acciones, alignItems: 'center' }}>
-        <button style={boton} disabled={deshabilitado} onClick={() => void descargar()}>
-          Exportar historial
-        </button>
-        <button style={boton} disabled={deshabilitado} onClick={() => setConfirmarBorrado(true)}>
-          Borrar historial
-        </button>
-      </div>
-      <label style={{ display: 'block', marginTop: 12 }}>
-        Importar historial
-        <input
-          type="file"
-          accept="application/json,.json"
-          disabled={deshabilitado}
-          onChange={cargarArchivo}
-          style={{ display: 'block', width: '100%', minHeight: 44, marginTop: 8 }}
-        />
-      </label>
-      {confirmarBorrado && (
-        <div>
-          <p>¿Borrar todas las predicciones y observaciones de este navegador?</p>
-          <div style={acciones}>
-            <button
-              style={boton}
-              disabled={deshabilitado}
-              onClick={() =>
-                void ejecutar(async () => {
-                  await borrar();
-                  setConfirmarBorrado(false);
-                  setMensaje('Historial borrado.');
-                })
-              }
-            >
-              Confirmar borrado
-            </button>
-            <button style={boton} disabled={ocupado} onClick={() => setConfirmarBorrado(false)}>
-              Cancelar
-            </button>
-          </div>
-        </div>
-      )}
-      {mensaje && <p role="status">{mensaje}</p>}
-      {error && <p role="alert">{error}</p>}
-    </>
-  );
-}
-
-export function PanelExactitud({ resumen, disponible, exportar, importar, borrar }: Props) {
+export function PanelExactitud({ resumen, disponible, exportar, importar, borrar, conGestion = true }: Props) {
   return (
     <section aria-label="Panel de Exactitud" style={{ margin: '24px 0', borderTop: '1px solid #ddd' }}>
       <h2>Panel de Exactitud</h2>
@@ -357,13 +238,15 @@ export function PanelExactitud({ resumen, disponible, exportar, importar, borrar
           {resumen.confiabilidad.length > 0 && <DiagramaConfiabilidad cajas={resumen.confiabilidad} />}
         </>
       )}
-      <GestionHistorial
-        resumen={resumen}
-        disponible={disponible}
-        exportar={exportar}
-        importar={importar}
-        borrar={borrar}
-      />
+      {conGestion && (
+        <GestionHistorial
+          resumen={resumen}
+          disponible={disponible}
+          exportar={exportar}
+          importar={importar}
+          borrar={borrar}
+        />
+      )}
     </section>
   );
 }
