@@ -6,12 +6,10 @@ import { describe, expect, test } from 'vitest';
 const COLORES_PENDIENTES: string[] = [
   'src/ui/AvisoActualizacion.tsx',
   'src/ui/AvisoSinConexion.tsx',
-  'src/ui/PanelExactitud.tsx',
 ];
 const ESTILOS_EN_LINEA_PENDIENTES: string[] = [
   'src/ui/AvisoActualizacion.tsx',
   'src/ui/AvisoSinConexion.tsx',
-  'src/ui/PanelExactitud.tsx',
 ];
 
 const raiz = process.cwd();

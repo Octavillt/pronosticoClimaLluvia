@@ -1,0 +1,150 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+  min-width: 0;
+}
+
+.panel__tarjeta {
+  min-width: 0;
+}
+
+.panel__titulo {
+  font-family: var(--fuente-titulos);
+  font-size: 20px;
+  line-height: 26px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.panel__titulo--chico {
+  font-size: 18px;
+  line-height: 24px;
+}
+
+.panel__contadores {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0 0;
+}
+
+.panel__mosaico {
+  background: var(--color-fondo);
+  border-radius: 14px;
+  padding: 10px var(--espacio-3);
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+.panel__mosaico dd {
+  font-family: var(--fuente-titulos);
+  font-size: 26px;
+  line-height: 30px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.panel__mosaico dt {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--color-texto-suave);
+}
+
+.panel__subtitulo {
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 700;
+  margin: var(--espacio-4) 0 0;
+}
+
+.panel__texto,
+.panel__nota,
+.panel__aviso {
+  color: var(--color-texto-suave);
+  margin: var(--espacio-2) 0 0;
+}
+
+.panel__texto {
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.panel__nota {
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.panel__aviso {
+  font-size: 15px;
+  line-height: 22px;
+}
+
+.panel__tabla-caja {
+  overflow-x: auto;
+  margin-top: var(--espacio-2);
+  min-width: 0;
+}
+
+.panel__tabla {
+  width: 100%;
+  min-width: 480px;
+  border-collapse: collapse;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.panel__tabla th,
+.panel__tabla td {
+  padding: 10px var(--espacio-2);
+  border-top: 1px solid var(--color-linea);
+}
+
+.panel__tabla thead th {
+  color: var(--color-texto-suave);
+  text-align: left;
+}
+
+.panel__tabla th[scope="row"] {
+  font-weight: 600;
+  text-align: left;
+}
+
+.panel__tabla caption {
+  font-size: 12px;
+  text-align: left;
+  color: var(--color-texto-suave);
+  padding-bottom: 6px;
+}
+
+.panel__calibracion {
+  font-weight: 600;
+  color: var(--color-accion-texto);
+}
+
+.panel__grafica {
+  display: block;
+  width: 100%;
+  max-width: 500px;
+  height: auto;
+}
+
+.panel__eje {
+  stroke: var(--color-linea-control);
+}
+
+.panel__diagonal {
+  stroke: var(--color-texto-suave);
+  stroke-dasharray: 5 4;
+}
+
+.panel__etiqueta-eje {
+  fill: var(--color-texto-suave);
+  font-size: 12px;
+  font-family: inherit;
+}
+
+.panel__punto {
+  fill: var(--color-primario);
+  fill-opacity: 0.85;
+}

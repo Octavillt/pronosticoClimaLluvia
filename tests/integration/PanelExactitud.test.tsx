@@ -117,4 +117,68 @@ describe('PanelExactitud', () => {
     expect((screen.getByRole('button', { name: 'Exportar historial' }) as HTMLButtonElement).disabled).toBe(true);
     expect((screen.getByLabelText('Importar historial') as HTMLInputElement).disabled).toBe(true);
   });
+  test('con datos organiza tres tarjetas, cuatro mosaicos y tablas dentro de cajas desplazables', () => {
+    const historial = historialVerificacion(10);
+    const resumen = resumirExactitud(historial.predicciones, historial.observaciones, Date.now());
+    const { container } = render(<PanelExactitud disponible resumen={resumen}
+      exportar={vi.fn()} importar={vi.fn()} borrar={vi.fn()} />);
+    const tarjetas = container.querySelectorAll('.panel > .panel__tarjeta');
+    expect(tarjetas).toHaveLength(3);
+    expect([...tarjetas].map((tarjeta) => tarjeta.querySelector('h2')?.textContent)).toEqual([
+      'Exactitud del pronóstico', 'Por horizonte', 'Confiabilidad',
+    ]);
+    for (const tarjeta of tarjetas) {
+      expect(tarjeta.classList.contains('tarjeta')).toBe(true);
+    }
+    const mosaicos = container.querySelectorAll('dl.panel__contadores > .panel__mosaico');
+    expect(mosaicos).toHaveLength(4);
+    const etiquetas = ['Observaciones', 'Horas verificadas', 'Horas con datos insuficientes', 'Pares verificados'];
+    const sufijos = ['observaciones', 'horas', 'insuficientes', 'pares'];
+    const valores = [resumen.observaciones, resumen.horasVerificadas, resumen.horasInsuficientes, resumen.pares];
+    mosaicos.forEach((mosaico, i) => {
+      expect(mosaico.children[0].tagName.toLowerCase()).toBe('dt');
+      expect(mosaico.children[0].textContent).toBe(etiquetas[i]);
+      expect(mosaico.children[1]).toBe(screen.getByTestId(`exactitud-${sufijos[i]}`));
+      expect(mosaico.children[1].textContent).toBe(String(valores[i]));
+    });
+    const tablas = screen.getAllByRole('table');
+    expect(tablas).toHaveLength(2);
+    for (const tabla of tablas) {
+      expect(tabla.parentElement?.tagName.toLowerCase()).toBe('div');
+      expect(tabla.parentElement?.classList.contains('panel__tabla-caja')).toBe(true);
+      expect(tabla.querySelector('caption')).not.toBeNull();
+    }
+    expect(screen.getByRole('region', { name: 'Tus datos' })).toBeTruthy();
+    expect(container.querySelector('[style]')).toBeNull();
+  });
+
+  test('la gráfica conserva sus títulos y usa clases sin estilos ni colores literales', () => {
+    const historial = historialVerificacion();
+    const resumen = resumirExactitud(historial.predicciones, historial.observaciones, Date.now());
+    render(<PanelExactitud disponible resumen={resumen}
+      exportar={vi.fn()} importar={vi.fn()} borrar={vi.fn()} />);
+    const grafica = screen.getByRole('img', { name: /Confiabilidad/ });
+    expect(grafica.getAttribute('viewBox')).toBe('0 0 400 300');
+    expect(grafica.querySelectorAll('.panel__eje')).toHaveLength(2);
+    expect(grafica.querySelector('.panel__diagonal title')?.textContent)
+      .toBe('Referencia: frecuencia igual a probabilidad');
+    expect(grafica.querySelectorAll('circle.panel__punto')).toHaveLength(1);
+    expect(grafica.querySelector('circle title')?.textContent).toMatch(/150 pares/);
+    expect(grafica.hasAttribute('style')).toBe(false);
+    expect(grafica.querySelector('[style], [fill^="#"], [stroke^="#"]')).toBeNull();
+    expect(grafica.hasAttribute('fill')).toBe(false);
+    expect(grafica.hasAttribute('stroke')).toBe(false);
+  });
+
+  test.each([false, true])('el aviso de disponible=%s se presenta dentro de una tarjeta', (disponible) => {
+    const { container } = render(<PanelExactitud disponible={disponible} resumen={null}
+      exportar={vi.fn()} importar={vi.fn()} borrar={vi.fn()} />);
+    const aviso = disponible
+      ? screen.getByText('Cargando historial local…')
+      : screen.getByText(/El almacenamiento local no está disponible\. El pronóstico sigue funcionando/);
+    expect(aviso.classList.contains('panel__aviso')).toBe(true);
+    expect(aviso.parentElement?.classList.contains('tarjeta')).toBe(true);
+    expect(container.querySelectorAll('.panel > .panel__tarjeta')).toHaveLength(1);
+    expect(screen.getByRole('heading', { level: 2, name: 'Exactitud del pronóstico' })).toBeTruthy();
+  });
 });
