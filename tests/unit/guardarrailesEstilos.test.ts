@@ -11,7 +11,6 @@ const COLORES_PENDIENTES: string[] = [
 const ESTILOS_EN_LINEA_PENDIENTES: string[] = [
   'src/ui/AvisoActualizacion.tsx',
   'src/ui/AvisoSinConexion.tsx',
-  'src/ui/BotonLluvia.tsx',
   'src/ui/PanelExactitud.tsx',
 ];
 

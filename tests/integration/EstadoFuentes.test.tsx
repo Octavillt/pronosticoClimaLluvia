@@ -48,4 +48,28 @@ describe('EstadoFuentes', () => {
     expect(screen.getByText(/Ensamble Open-Meteo: parcial \(sin gem_global_ensemble\)/)).toBeTruthy();
     expect(screen.getByText('Caché: reutilizado')).toBeTruthy();
   });
+  test('conserva una única lista discreta con las líneas completas sin elementos hijos', () => {
+    const { container } = render(<EstadoFuentes fuentes={FUENTES}
+      radar={{ estado: 'ok', tFrameMs: T_FRAME, avance: null }} timezone="America/Mexico_City" />);
+    const seccion = screen.getByRole('region', { name: 'Estado de fuentes' });
+    expect(seccion.classList.contains('fuentes')).toBe(true);
+    expect(seccion.classList.contains('tarjeta')).toBe(false);
+    expect(screen.getByRole('heading', { name: 'Fuentes' }).classList.contains('fuentes__titulo')).toBe(true);
+    const listas = screen.getAllByRole('list');
+    expect(listas).toHaveLength(1);
+    expect(listas[0].tagName.toLowerCase()).toBe('ul');
+    expect(listas[0].classList.contains('fuentes__lista')).toBe(true);
+    expect(listas[0].querySelector('ul, ol')).toBeNull();
+    const lineas = screen.getAllByRole('listitem');
+    expect(lineas.map((linea) => linea.textContent)).toEqual([
+      'Ensamble Open-Meteo: ✓',
+      'Complemento horario: ✓',
+      'Radar RainViewer: ✓ (imagen de las 21:26 h)',
+      'Caché: consultado',
+    ]);
+    for (const linea of lineas) {
+      expect(linea.children).toHaveLength(0);
+    }
+    expect(container.querySelector('[style]')).toBeNull();
+  });
 });

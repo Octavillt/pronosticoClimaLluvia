@@ -75,4 +75,43 @@ describe('BotonLluvia', () => {
     );
     expect(screen.queryByText('Gracias, registrado.')).toBeNull();
   });
+  test.each([null, 'Guadalajara'])('el subtítulo corresponde al lugar %s', (lugar) => {
+    render(<BotonLluvia disponible lugar={lugar} registrarObservacionUsuario={async () => true} />);
+    const mensajeCiudad = 'Reporta solo lo que ves donde estás: ' +
+      'estos reportes calibran el pronóstico de este lugar.';
+    const mensajeDispositivo = 'Tus respuestas hacen más exacto el pronóstico aquí.';
+    expect(screen.getByRole('heading', {
+      name: lugar === null ? '¿Está lloviendo?' : `¿Está lloviendo en ${lugar}?`,
+    })).toBeTruthy();
+    if (lugar === null) {
+      expect(screen.getByText(mensajeDispositivo)).toBeTruthy();
+      expect(screen.queryByText(/Reporta solo lo que ves donde estás/)).toBeNull();
+    } else {
+      expect(screen.getByText(mensajeCiudad)).toBeTruthy();
+      expect(screen.queryByText(mensajeDispositivo)).toBeNull();
+    }
+  });
+
+  test('los botones usan las variantes visuales y se deshabilitan sin almacenamiento', () => {
+    const registrar = vi.fn(async () => true);
+    const { container, rerender } = render(
+      <BotonLluvia disponible lugar={null} registrarObservacionUsuario={registrar} />,
+    );
+    const si = screen.getByRole('button', { name: 'Sí, está lloviendo' }) as HTMLButtonElement;
+    const no = screen.getByRole('button', { name: 'No está lloviendo' }) as HTMLButtonElement;
+    expect(si.classList.contains('boton')).toBe(true);
+    expect(si.classList.contains('boton--primario')).toBe(true);
+    expect(no.classList.contains('boton')).toBe(true);
+    expect(no.classList.contains('boton--secundario')).toBe(true);
+    expect(si.disabled).toBe(false);
+    expect(no.disabled).toBe(false);
+    expect(container.querySelector('section')?.classList.contains('tarjeta')).toBe(true);
+    expect(container.querySelector('[style]')).toBeNull();
+    rerender(<BotonLluvia disponible={false} lugar={null} registrarObservacionUsuario={registrar} />);
+    expect(si.disabled).toBe(true);
+    expect(no.disabled).toBe(true);
+    fireEvent.click(si);
+    fireEvent.click(no);
+    expect(registrar).not.toHaveBeenCalled();
+  });
 });

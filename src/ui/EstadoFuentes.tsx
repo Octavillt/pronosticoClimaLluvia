@@ -1,6 +1,7 @@
 import type { EstadoFuentes, EstadoRadar } from '../domain/types';
 import { formatHoraLocal } from '../utils/localTime';
 import { nombreRumbo } from '../utils/rumbo';
+import './EstadoFuentes.css';
 
 const ETIQUETAS: Record<string, string> = {
   ok: '✓',
@@ -38,9 +39,9 @@ export function EstadoFuentes({
   timezone?: string;
 }) {
   return (
-    <section aria-label="Estado de fuentes">
-      <h2>Fuentes</h2>
-      <ul>
+    <section aria-label="Estado de fuentes" className="fuentes">
+      <h2 className="fuentes__titulo">Fuentes</h2>
+      <ul className="fuentes__lista">
         <li>
           Ensamble Open-Meteo: {ETIQUETAS[fuentes.ensamble]}
           {fuentes.modelosFallidos.length > 0 &&
