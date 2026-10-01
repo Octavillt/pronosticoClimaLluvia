@@ -7,9 +7,35 @@
   padding: var(--espacio-4) var(--espacio-4) 32px;
 }
 
-.cielo > * {
+.cielo > :not(.cielo__ilustracion) {
   position: relative;
   z-index: 1;
+}
+
+.cielo__ilustracion {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 260px;
+  pointer-events: none;
+}
+
+.ilustracion__nube-lejana {
+  fill: var(--color-nube-lejana);
+}
+
+.ilustracion__nube-clara {
+  fill: var(--color-nube-clara);
+}
+
+.ilustracion__lluvia {
+  stroke: var(--color-lluvia);
+}
+
+.ilustracion__sol,
+.ilustracion__halo {
+  fill: var(--color-sol);
 }
 
 .cielo__barra {

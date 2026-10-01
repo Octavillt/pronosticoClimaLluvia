@@ -1,6 +1,7 @@
 import { config } from '../config';
 import type { GeoPoint } from '../domain/types';
 import type { ResumenCielo } from '../utils/mensajeCielo';
+import { IlustracionCielo } from './IlustracionCielo';
 import './Cielo.css';
 
 interface Props {
@@ -15,6 +16,7 @@ export function Cielo({ punto, nombre, resumen, horasVerificadas, onCambiar }: P
   const coordenadas = `${punto.lat.toFixed(2)}, ${punto.lon.toFixed(2)}`.replaceAll('-', '−');
   return (
     <header className="cielo app__sangrado" data-nivel={resumen.nivel}>
+      <IlustracionCielo nivel={resumen.nivel} />
       <div className="cielo__barra">
         <div className="cielo__marca">
           <span className="cielo__emblema">

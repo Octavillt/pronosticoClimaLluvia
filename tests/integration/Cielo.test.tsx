@@ -70,7 +70,14 @@ describe('Cielo', () => {
     expect(screen.getByText('19.43, −99.13', { exact: true })).toBeTruthy();
     expect(screen.getAllByRole('heading', { level: 1, name: 'SistemaClima' })).toHaveLength(1);
     expect(container.querySelectorAll('h1')).toHaveLength(1);
-    expect(container.querySelectorAll('svg[aria-hidden="true"]')).toHaveLength(3);
+    expect(container.querySelectorAll('svg[aria-hidden="true"]')).toHaveLength(4);
+    const ilustracion = container.querySelector('header > svg.cielo__ilustracion');
+    expect(ilustracion).not.toBeNull();
+    expect(container.querySelector('header')?.firstElementChild).toBe(ilustracion);
+    expect(ilustracion?.getAttribute('aria-hidden')).toBe('true');
+    expect(ilustracion?.getAttribute('focusable')).toBe('false');
+    expect(ilustracion?.getAttribute('data-nivel')).toBe(resumen.nivel);
+    expect(screen.queryByRole('img')).toBeNull();
   });
 
   test.each([0, 150])('muestra una sola calibración con %s horas verificadas', (horas) => {
