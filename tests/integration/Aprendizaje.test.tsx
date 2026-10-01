@@ -82,6 +82,10 @@ describe('Aprendizaje', () => {
     expect(boton.getAttribute('aria-expanded')).toBe('false');
     expect(boton.getAttribute('aria-controls')).toBe('detalle-exactitud');
     const detalle = container.querySelector<HTMLDivElement>('#detalle-exactitud');
+    const tarjeta = screen.getByRole('region', { name: 'Aprendizaje del pronóstico' });
+    expect(detalle).not.toBeNull();
+    expect(tarjeta.contains(detalle)).toBe(false);
+    expect(tarjeta.nextElementSibling).toBe(detalle);
     expect(detalle?.hidden).toBe(true);
     expect(screen.queryByRole('region', { name: 'Panel de Exactitud' })).toBeNull();
     const contadores = ['observaciones', 'horas', 'insuficientes', 'pares']

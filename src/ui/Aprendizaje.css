@@ -78,10 +78,6 @@
   transform: rotate(90deg);
 }
 
-.aprendizaje__detalle {
-  margin-top: var(--espacio-4);
-}
-
 @media (prefers-reduced-motion: no-preference) {
   .aprendizaje__chevron {
     transition: transform 0.15s;
