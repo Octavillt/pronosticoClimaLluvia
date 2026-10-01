@@ -2,15 +2,10 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { describe, expect, test } from 'vitest';
 
-// Estas listas se vacían en la última tarea de la fase conforme se migra cada componente.
-const COLORES_PENDIENTES: string[] = [
-  'src/ui/AvisoActualizacion.tsx',
-  'src/ui/AvisoSinConexion.tsx',
-];
-const ESTILOS_EN_LINEA_PENDIENTES: string[] = [
-  'src/ui/AvisoActualizacion.tsx',
-  'src/ui/AvisoSinConexion.tsx',
-];
+// Ratchet: archivos que aún incumplen la regla. Quedaron vacías al terminar el rediseño; una excepción
+// temporal se agrega aquí con su motivo y el ratchet exige quitarla en cuanto el archivo cumpla.
+const COLORES_PENDIENTES: string[] = [];
+const ESTILOS_EN_LINEA_PENDIENTES: string[] = [];
 
 const raiz = process.cwd();
 const rutaTokens = 'src/estilos/tokens.css';

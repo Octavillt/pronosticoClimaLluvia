@@ -1,20 +1,23 @@
-import type { CSSProperties } from 'react';
+import './Avisos.css';
 
-export const COLORES_AVISO_SIN_CONEXION = { fondo: '#5f6368', texto: '#ffffff' } as const;
-
-const banner: CSSProperties = {
-  background: COLORES_AVISO_SIN_CONEXION.fondo,
-  color: COLORES_AVISO_SIN_CONEXION.texto,
-  padding: '12px',
-  borderRadius: 8,
-  margin: '8px 0',
-};
+const TRAZO_SIN_WIFI = [
+  'M3 3l18 18M8.5 8.8A9 9 0 0 1 21 12M3 12a9 9 0 0 1 4-2.4',
+  'M12 17.5h.01M8.5 14.5a5 5 0 0 1 3.5-1.4',
+].join('');
 
 export function AvisoSinConexion({ enLinea }: { enLinea: boolean }) {
   if (enLinea) return null;
   return (
-    <div role="status" style={banner}>
-      Sin conexión. Puede que el pronóstico no esté actualizado.
+    <div role="status" className="aviso aviso--sin-conexion">
+      <span className="aviso__texto">
+        <svg
+          width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+          strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" className="aviso__icono"
+        >
+          <path d={TRAZO_SIN_WIFI} />
+        </svg>
+        Sin conexión. Puede que el pronóstico no esté actualizado.
+      </span>
     </div>
   );
 }
