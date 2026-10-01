@@ -1,20 +1,22 @@
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, test } from 'vitest';
 import { config } from '../../src/config';
+import type { ResultadoPronostico } from '../../src/domain/types';
+import { limpiarExpirados, guardarCache } from '../../src/services/cache';
 import { obtenerPronostico } from '../../src/services/forecastService';
-import { limpiarExpirados } from '../../src/services/cache';
-import { ensambleFixture, forecastFixture, MODELOS_PRUEBA } from '../helpers/ensamble';
+import { corridaModelo, geohashEncode } from '../../src/services/geohash';
+import { ensambleFixture, forecastFixture, horasUtcPrueba, MODELOS_PRUEBA } from '../helpers/ensamble';
 import { server } from '../setup';
 
 const CDMX = { lat: 19.43, lon: -99.13 };
 
-function contadorEnsemble() {
+function contadorEnsemble(timezone = 'America/Mexico_City') {
   const llamadas: string[] = [];
   return {
     llamadas,
     handler: http.get(`${config.urls.ensemble}`, ({ request }) => {
       llamadas.push(new URL(request.url).searchParams.get('models') ?? '');
-      return HttpResponse.json(ensambleFixture());
+      return HttpResponse.json(ensambleFixture({ timezone }));
     }),
   };
 }
@@ -134,6 +136,105 @@ describe('forecastService', () => {
     if (resultado.tipo === 'ok') {
       expect(resultado.fuentes.complemento).toBe('error');
       expect(resultado.precipitacionMm).toHaveLength(resultado.horasUtc.length);
+    }
+  });
+
+  test('la zona del ensamble gana sobre la del complemento', async () => {
+    server.use(
+      contadorEnsemble('America/Tijuana').handler,
+      http.get(`${config.urls.forecast}`, () =>
+        HttpResponse.json(forecastFixture(72, undefined, { timezone: 'America/Mexico_City' })),
+      ),
+    );
+
+    const resultado = await obtenerPronostico(CDMX);
+
+    expect(resultado.tipo).toBe('ok');
+    if (resultado.tipo === 'ok') {
+      expect(resultado.timezone).toBe('America/Tijuana');
+    }
+  });
+
+  test('si el ensamble responde GMT, usa la zona del complemento', async () => {
+    server.use(
+      contadorEnsemble('GMT').handler,
+      http.get(`${config.urls.forecast}`, () =>
+        HttpResponse.json(forecastFixture(72, undefined, { timezone: 'America/Tijuana' })),
+      ),
+    );
+
+    const resultado = await obtenerPronostico(CDMX);
+
+    expect(resultado.tipo).toBe('ok');
+    if (resultado.tipo === 'ok') {
+      expect(resultado.timezone).toBe('America/Tijuana');
+    }
+  });
+
+  test('si ninguna respuesta trae zona válida, usa la predeterminada', async () => {
+    server.use(
+      contadorEnsemble('GMT').handler,
+      http.get(`${config.urls.forecast}`, () =>
+        HttpResponse.json(forecastFixture(72, undefined, { timezone: 'GMT' })),
+      ),
+    );
+
+    const resultado = await obtenerPronostico(CDMX);
+
+    expect(resultado.tipo).toBe('ok');
+    if (resultado.tipo === 'ok') {
+      expect(resultado.timezone).toBe('America/Mexico_City');
+    }
+  });
+
+  test('ignora una entrada de caché vieja con timezone GMT y consulta la red', async () => {
+    const { llamadas, handler } = contadorEnsemble('America/Tijuana');
+    const claveVieja = `pop:${geohashEncode(CDMX.lat, CDMX.lon)}:${corridaModelo()}`;
+    const entradaVieja: Extract<ResultadoPronostico, { tipo: 'ok' }> = {
+      tipo: 'ok',
+      punto: CDMX,
+      timezone: 'GMT',
+      horasUtc: horasUtcPrueba(2).map((h) => `${h}Z`),
+      pop: [0, 0.5],
+      precipitacionMm: [null, null],
+      temperaturaC: [null, null],
+      codigoClima: [null, null],
+      fuentes: { ensamble: 'ok', modelosFallidos: [], complemento: 'ok', cache: 'miss' },
+    };
+    await guardarCache(claveVieja, entradaVieja, 60 * 60 * 1000);
+    server.use(handler, handlerForecast);
+
+    const resultado = await obtenerPronostico(CDMX);
+
+    expect(llamadas).toHaveLength(1);
+    expect(resultado.tipo).toBe('ok');
+    if (resultado.tipo === 'ok') {
+      expect(resultado.fuentes.cache).toBe('miss');
+      expect(resultado.timezone).toBe('America/Tijuana');
+    }
+  });
+
+  test('alinea el complemento con el ensamble por hora UTC', async () => {
+    server.use(
+      contadorEnsemble().handler,
+      http.get(`${config.urls.forecast}`, () => {
+        // Empieza una hora antes: el valor de cada hora debe caer en su hora, no en su índice.
+        const fixture = forecastFixture(74, '2026-09-23T23:00');
+        (fixture.hourly as Record<string, unknown>).precipitation = Array.from(
+          { length: 74 },
+          (_, h) => h,
+        );
+        return HttpResponse.json(fixture);
+      }),
+    );
+
+    const resultado = await obtenerPronostico(CDMX);
+
+    expect(resultado.tipo).toBe('ok');
+    if (resultado.tipo === 'ok') {
+      expect(resultado.horasUtc).toEqual(horasUtcPrueba(72).map((h) => `${h}Z`));
+      expect(resultado.precipitacionMm).toHaveLength(72);
+      expect(resultado.precipitacionMm.slice(0, 3)).toEqual([1, 2, 3]);
     }
   });
 });

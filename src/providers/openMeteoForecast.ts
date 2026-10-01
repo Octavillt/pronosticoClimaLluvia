@@ -1,6 +1,7 @@
 import { config } from '../config';
 import type { GeoPoint, RespuestaPronostico } from '../domain/types';
 import { fetchJson } from './http';
+import { horasUtcDesdeEpoch, PARAMETROS_TIEMPO, zonaDeRespuesta } from './tiempoOpenMeteo';
 
 function aNumeros(valor: unknown): (number | null)[] {
   if (!Array.isArray(valor)) {
@@ -19,13 +20,17 @@ export function parseForecastResponse(json: unknown): RespuestaPronostico {
     throw new Error('Respuesta de pronóstico inválida: falta "hourly"');
   }
   const registro = hourly as Record<string, unknown>;
-  const tiempos = registro.time;
-  if (!Array.isArray(tiempos) || !tiempos.every((t) => typeof t === 'string')) {
-    throw new Error('Respuesta de pronóstico inválida: falta "hourly.time"');
+  let horasUtc: string[];
+  try {
+    horasUtc = horasUtcDesdeEpoch(registro.time);
+  } catch (e) {
+    throw new Error(
+      `Respuesta de pronóstico inválida: falta "hourly.time" (${(e as Error).message})`,
+    );
   }
   return {
-    timezone: typeof raiz.timezone === 'string' ? raiz.timezone : 'America/Mexico_City',
-    horasUtc: (tiempos as string[]).map((t) => `${t}Z`),
+    timezone: zonaDeRespuesta(raiz),
+    horasUtc,
     temperaturaC: aNumeros(registro.temperature_2m),
     precipitacionMm: aNumeros(registro.precipitation),
     codigoClima: aNumeros(registro.weather_code),
@@ -38,7 +43,7 @@ export async function fetchForecast(punto: GeoPoint): Promise<RespuestaPronostic
     longitude: punto.lon.toFixed(4),
     hourly: 'temperature_2m,precipitation,weather_code',
     forecast_days: '3',
-    timezone: 'UTC',
+    ...PARAMETROS_TIEMPO,
   });
   const json = await fetchJson(`${config.urls.forecast}?${params.toString()}`);
   return parseForecastResponse(json);

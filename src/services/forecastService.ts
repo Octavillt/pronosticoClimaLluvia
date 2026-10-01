@@ -5,6 +5,7 @@ import type {
   RespuestaPronostico,
   ResultadoPronostico,
 } from '../domain/types';
+import { ZONA_PREDETERMINADA } from '../utils/localTime';
 import { fetchEnsemble, fetchEnsemblePorModelo } from '../providers/openMeteoEnsemble';
 import { fetchForecast } from '../providers/openMeteoForecast';
 import { computePopSeries } from './ensemblePop';
@@ -81,7 +82,7 @@ export async function obtenerPronostico(punto: GeoPoint): Promise<ResultadoProno
     return { tipo: 'fuera-mexico', punto };
   }
 
-  const clave = `pop:${geohashEncode(punto.lat, punto.lon)}:${corridaModelo()}`;
+  const clave = `pop:v2:${geohashEncode(punto.lat, punto.lon)}:${corridaModelo()}`;
   // La caché es opcional: un navegador sin IndexedDB aún puede consultar los proveedores.
   const cacheado = await leerCache<DatosCacheables>(clave).catch(() => null);
   if (cacheado) {
@@ -110,7 +111,7 @@ export async function obtenerPronostico(punto: GeoPoint): Promise<ResultadoProno
   const datos: DatosCacheables = {
     tipo: 'ok',
     punto,
-    timezone: complemento?.timezone ?? 'America/Mexico_City',
+    timezone: ensamble.timezone ?? complemento?.timezone ?? ZONA_PREDETERMINADA,
     horasUtc,
     pop,
     ...series,

@@ -1,6 +1,7 @@
 import { config } from '../config';
 import type { GeoPoint, RespuestaEnsamble, SerieMiembros } from '../domain/types';
 import { fetchJson } from './http';
+import { horasUtcDesdeEpoch, PARAMETROS_TIEMPO, zonaDeRespuesta } from './tiempoOpenMeteo';
 
 export const MODELOS_ENSAMBLE = [
   'ecmwf_ifs025',
@@ -20,8 +21,8 @@ function urlEnsamble(punto: GeoPoint, modelos: readonly string[]): string {
     longitude: punto.lon.toFixed(4),
     hourly: 'precipitation',
     forecast_days: String(DIAS_PRONOSTICO),
-    timezone: 'UTC',
     models: modelos.join(','),
+    ...PARAMETROS_TIEMPO,
   });
   return `${config.urls.ensemble}?${params.toString()}`;
 }
@@ -39,11 +40,12 @@ export function parseEnsembleResponse(json: unknown, modelos: readonly string[])
     throw new Error('Respuesta de ensamble inválida: falta "hourly"');
   }
   const registro = hourly as Record<string, unknown>;
-  const tiempos = registro.time;
-  if (!Array.isArray(tiempos) || tiempos.length === 0 || !tiempos.every((t) => typeof t === 'string')) {
-    throw new Error('Respuesta de ensamble inválida: falta "hourly.time"');
+  let horasUtc: string[];
+  try {
+    horasUtc = horasUtcDesdeEpoch(registro.time);
+  } catch (e) {
+    throw new Error(`Respuesta de ensamble inválida: falta "hourly.time" (${(e as Error).message})`);
   }
-  const horasUtc = (tiempos as string[]).map((t) => `${t}Z`);
 
   const porModelo: SerieMiembros[] = [];
   const modelosFallidos: string[] = [];
@@ -76,7 +78,12 @@ export function parseEnsembleResponse(json: unknown, modelos: readonly string[])
     throw new Error('Respuesta de ensamble sin ningún modelo con miembros');
   }
 
-  return { horasUtc, porModelo, modelosFallidos };
+  return {
+    horasUtc,
+    timezone: zonaDeRespuesta(json as Record<string, unknown>),
+    porModelo,
+    modelosFallidos,
+  };
 }
 
 export async function fetchEnsemble(punto: GeoPoint): Promise<RespuestaEnsamble> {
@@ -100,9 +107,10 @@ export async function fetchEnsemblePorModelo(punto: GeoPoint): Promise<Respuesta
   }
 
   const horasUtc = exitosas[0].value.horasUtc;
+  const timezone = exitosas.find((r) => r.value.timezone !== null)?.value.timezone ?? null;
   const porModelo = exitosas.flatMap((r) => r.value.porModelo);
   const modelosFallidos = MODELOS_ENSAMBLE.filter(
     (modelo) => !porModelo.some((serie) => serie.modelo === modelo),
   );
-  return { horasUtc, porModelo, modelosFallidos };
+  return { horasUtc, timezone, porModelo, modelosFallidos };
 }
