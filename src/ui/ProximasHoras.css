@@ -1,0 +1,115 @@
+.proximas {
+  min-width: 0;
+}
+
+.proximas__cabecera {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 32px;
+  padding: 0 var(--espacio-4);
+}
+
+.proximas__titulo {
+  font-family: var(--fuente-titulos);
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.proximas__pista {
+  font-size: 13px;
+  color: var(--color-texto-suave);
+}
+
+.proximas__lista {
+  display: flex;
+  gap: var(--espacio-2);
+  margin: 0;
+  padding: var(--espacio-3) var(--espacio-4) var(--espacio-1);
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: var(--espacio-4);
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+
+.pildora {
+  flex: none;
+  scroll-snap-align: start;
+  width: 72px;
+  height: 152px;
+  border-radius: var(--radio-pildora);
+  padding: var(--espacio-3) 0 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--color-tarjeta);
+  border: 1px solid var(--color-linea);
+  color: var(--color-texto);
+}
+
+.pildora__hora {
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 600;
+}
+
+.pildora__gota {
+  width: 40px;
+  height: 50px;
+}
+
+.pildora__relleno {
+  fill: var(--color-primario);
+}
+
+.pildora__contorno {
+  fill: none;
+  stroke: var(--color-primario);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+
+.pildora__porcentaje {
+  font-family: var(--fuente-titulos);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 22px;
+}
+
+.pildora__radar {
+  height: 16px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--color-texto-suave);
+}
+
+.pildora[data-actual] {
+  background: var(--color-cielo);
+  border-color: var(--color-cielo);
+  color: var(--color-sobre-cielo);
+}
+
+.pildora[data-actual] .pildora__radar {
+  color: var(--color-sobre-cielo-suave);
+}
+
+.pildora[data-actual] .pildora__relleno {
+  fill: var(--color-gota-sobre-cielo);
+}
+
+.pildora[data-actual] .pildora__contorno {
+  stroke: var(--color-sobre-cielo);
+}
+
+.pildora--dia {
+  width: 64px;
+  border: 1.5px dashed var(--color-linea-control);
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-texto-suave);
+}

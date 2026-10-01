@@ -44,7 +44,7 @@ test.describe('Fase 1: pronóstico con fixtures', () => {
     await page.goto('/');
 
     await expect(page.getByTestId('pop-ahora')).toBeVisible();
-    await expect(page.getByRole('img', { name: /próximas horas/ })).toBeVisible();
+    await expect(page.getByRole('list', { name: /próximas horas/ })).toBeVisible();
     await expect(page.getByRole('list').filter({ hasText: 'Ensamble Open-Meteo' })).toBeVisible();
   });
 

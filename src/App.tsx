@@ -21,7 +21,7 @@ import { BuscadorCiudad } from './ui/BuscadorCiudad';
 import { BotonLluvia } from './ui/BotonLluvia';
 import { Cielo } from './ui/Cielo';
 import { EstadoFuentes } from './ui/EstadoFuentes';
-import { LineaDeHoras } from './ui/LineaDeHoras';
+import { ProximasHoras } from './ui/ProximasHoras';
 import { PanelExactitud } from './ui/PanelExactitud';
 import { useVerificacion } from './ui/useVerificacion';
 import { indiceHoraEnCurso, MS_HORA } from './utils/horas';
@@ -242,19 +242,20 @@ export default function App({ controladorPwa = null }: { controladorPwa?: Contro
             horasVerificadas={horasVerificadasEnCurso}
             onCambiar={() => setFase('sin-ubicacion')}
           />
+          <ProximasHoras
+            horasUtc={resultado.horasUtc}
+            pop={popMostrada}
+            pesoRadar={mezcla.pesoRadar}
+            desde={horaEnCurso}
+            ahoraMs={ahoraMs}
+            timezone={resultado.timezone}
+          />
           <BotonLluvia
             key={`${punto.lat}|${punto.lon}`}
             disponible={verificacion.disponible}
             lugar={nombreLugar}
             cargando={verificacion.resumen === null}
             registrarObservacionUsuario={verificacion.registrarObservacionUsuario}
-          />
-          <LineaDeHoras
-            horasUtc={resultado.horasUtc}
-            pop={popMostrada}
-            pesoRadar={mezcla.pesoRadar}
-            desde={horaEnCurso}
-            timezone={resultado.timezone}
           />
           {radar.estado === 'ok' && indiceRadar && (
             <Suspense fallback={<p role="status">Cargando mapa del radar…</p>}>

@@ -6,7 +6,6 @@ import { describe, expect, test } from 'vitest';
 const COLORES_PENDIENTES: string[] = [
   'src/ui/AvisoActualizacion.tsx',
   'src/ui/AvisoSinConexion.tsx',
-  'src/ui/LineaDeHoras.tsx',
   'src/ui/MapaRadar.tsx',
   'src/ui/PanelExactitud.tsx',
 ];
@@ -14,7 +13,6 @@ const ESTILOS_EN_LINEA_PENDIENTES: string[] = [
   'src/ui/AvisoActualizacion.tsx',
   'src/ui/AvisoSinConexion.tsx',
   'src/ui/BotonLluvia.tsx',
-  'src/ui/LineaDeHoras.tsx',
   'src/ui/MapaRadar.tsx',
   'src/ui/PanelExactitud.tsx',
 ];
