@@ -162,10 +162,13 @@ describe('App + verificación', () => {
       screen.getByText(/Calibrada con tu historial local \(150 horas verificadas\)/),
     ).toBeTruthy();
 
-    // Lo que se registró durante esta sesión es la PoP sin calibrar.
-    const predicciones = await leerPredicciones();
-    const nuevas = predicciones.filter((p) => p.emitidoMs >= antesDeRender);
-    expect(nuevas.length).toBeGreaterThan(0);
+    // Lo que se registró durante esta sesión es la PoP sin calibrar. El registro es asíncrono:
+    // se espera a que exista en vez de leerlo en el mismo instante en que se ve la PoP calibrada.
+    await waitFor(async () => {
+      const nuevas = (await leerPredicciones()).filter((p) => p.emitidoMs >= antesDeRender);
+      expect(nuevas.length).toBeGreaterThan(0);
+    });
+    const nuevas = (await leerPredicciones()).filter((p) => p.emitidoMs >= antesDeRender);
     expect(nuevas.every((p) => p.pop > 0.7)).toBe(true);
   });
 
