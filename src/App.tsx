@@ -19,13 +19,13 @@ import { AvisoActualizacion } from './ui/AvisoActualizacion';
 import { AvisoSinConexion } from './ui/AvisoSinConexion';
 import { BuscadorCiudad } from './ui/BuscadorCiudad';
 import { BotonLluvia } from './ui/BotonLluvia';
+import { Cielo } from './ui/Cielo';
 import { EstadoFuentes } from './ui/EstadoFuentes';
 import { LineaDeHoras } from './ui/LineaDeHoras';
-import { ProbabilidadAhora } from './ui/ProbabilidadAhora';
 import { PanelExactitud } from './ui/PanelExactitud';
-import { UbicacionActual } from './ui/UbicacionActual';
 import { useVerificacion } from './ui/useVerificacion';
 import { indiceHoraEnCurso, MS_HORA } from './utils/horas';
+import { resumirCielo } from './utils/mensajeCielo';
 import './App.css';
 
 // Leaflet pesa bastante: solo se descarga cuando hay radar que mostrar.
@@ -35,7 +35,6 @@ type Fase = 'solicitando' | 'sin-ubicacion' | 'fuera-mexico' | 'error' | 'listo'
 
 const REFRESCO_RADAR_MS = 5 * 60_000;
 const REFRESCO_RELOJ_MS = 60_000;
-const PESO_RADAR_VISIBLE = 0.05;
 
 export default function App({ controladorPwa = null }: { controladorPwa?: ControladorPwa | null }) {
   const hayActualizacion = useActualizacionPwa(controladorPwa);
@@ -193,6 +192,19 @@ export default function App({ controladorPwa = null }: { controladorPwa?: Contro
     return horizonteH === null ? null : (verificacion.calibracion[horizonteH]?.n ?? null);
   }, [resultado, horaEnCurso, ahoraMs, verificacion.calibracion]);
 
+  const resumen = useMemo(
+    () => resultado && mezcla && popMostrada ? resumirCielo({
+      horasUtc: resultado.horasUtc,
+      pop: popMostrada,
+      pesoRadar: mezcla.pesoRadar,
+      indice: horaEnCurso,
+      ahoraMs,
+      timezone: resultado.timezone,
+      radar,
+    }) : null,
+    [resultado, mezcla, popMostrada, horaEnCurso, ahoraMs, radar],
+  );
+
   return (
     <main className="app">
       <AvisoActualizacion
@@ -200,7 +212,7 @@ export default function App({ controladorPwa = null }: { controladorPwa?: Contro
         onActualizar={() => controladorPwa?.activar()}
       />
       <AvisoSinConexion enLinea={enLinea} />
-      <h1>{config.appName}</h1>
+      {fase !== 'listo' && <h1>{config.appName}</h1>}
 
       {fase === 'solicitando' && <p role="status">Obteniendo pronóstico…</p>}
 
@@ -221,19 +233,14 @@ export default function App({ controladorPwa = null }: { controladorPwa?: Contro
         </section>
       )}
 
-      {fase === 'listo' && resultado && mezcla && popMostrada && punto && (
+      {fase === 'listo' && resultado && mezcla && popMostrada && punto && resumen && (
         <>
-          <UbicacionActual
+          <Cielo
             punto={punto}
             nombre={nombreLugar}
-            onCambiar={() => setFase('sin-ubicacion')}
-          />
-          <ProbabilidadAhora
-            pop={popMostrada[horaEnCurso]}
-            horaUtc={resultado.horasUtc[horaEnCurso]}
-            timezone={resultado.timezone}
-            conRadar={mezcla.pesoRadar[horaEnCurso] > PESO_RADAR_VISIBLE}
+            resumen={resumen}
             horasVerificadas={horasVerificadasEnCurso}
+            onCambiar={() => setFase('sin-ubicacion')}
           />
           <BotonLluvia
             key={`${punto.lat}|${punto.lon}`}

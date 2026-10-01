@@ -17,7 +17,6 @@ const ESTILOS_EN_LINEA_PENDIENTES: string[] = [
   'src/ui/LineaDeHoras.tsx',
   'src/ui/MapaRadar.tsx',
   'src/ui/PanelExactitud.tsx',
-  'src/ui/ProbabilidadAhora.tsx',
 ];
 
 const raiz = process.cwd();
