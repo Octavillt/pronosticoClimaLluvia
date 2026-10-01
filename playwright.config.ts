@@ -19,6 +19,7 @@ export default defineConfig({
   ],
   use: {
     baseURL: 'http://localhost:4173',
+    serviceWorkers: 'block',
     launchOptions: { slowMo: modoVisible ? 1_000 : 0 },
   },
   webServer: {
