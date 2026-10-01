@@ -1,4 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { beforeEach, describe, expect, test, vi } from 'vitest';
 import {
   borrarHistorial, importarHistorial, leerObservaciones, leerPredicciones,
@@ -28,6 +30,13 @@ async function esperarHistorial(): Promise<HTMLInputElement> {
 
 describe('GestionHistorial', () => {
   beforeEach(async () => { await borrarHistorial(); });
+
+  test('el label de importación posiciona el input oculto para conservar el foco local', () => {
+    const css = readFileSync(join(process.cwd(), 'src/ui/GestionHistorial.css'), 'utf8');
+    const regla = css.match(/\.datos__importar\s*\{([^}]*)\}/);
+    expect(regla, 'Falta la regla de posición del label .datos__importar').not.toBeNull();
+    expect(regla?.[1]).toMatch(/\bposition\s*:\s*relative\s*;/);
+  });
 
   test('ofrece los nombres accesibles completos y textos cortos con un input de archivo real', async () => {
     const { container } = render(<GestionConHistorial />);

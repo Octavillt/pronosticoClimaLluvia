@@ -16,18 +16,20 @@ import type { ControladorPwa } from './pwa/registro';
 import { useActualizacionPwa } from './pwa/useActualizacionPwa';
 import { useEnLinea } from './pwa/useEnLinea';
 import { AvisoActualizacion } from './ui/AvisoActualizacion';
+import { Aprendizaje } from './ui/Aprendizaje';
 import { AvisoSinConexion } from './ui/AvisoSinConexion';
 import { BuscadorCiudad } from './ui/BuscadorCiudad';
 import { BotonLluvia } from './ui/BotonLluvia';
 import { Cielo } from './ui/Cielo';
 import { EstadoFuentes } from './ui/EstadoFuentes';
+import { GestionHistorial } from './ui/GestionHistorial';
 import { ProximasHoras } from './ui/ProximasHoras';
-import { PanelExactitud } from './ui/PanelExactitud';
 import { RadarEsqueleto } from './ui/RadarEsqueleto';
 import { RadarEstado } from './ui/RadarEstado';
 import { useVerificacion } from './ui/useVerificacion';
 import { indiceHoraEnCurso, MS_HORA } from './utils/horas';
 import { resumirCielo } from './utils/mensajeCielo';
+import { progresoAprendizaje } from './utils/aprendizaje';
 import './App.css';
 
 // Leaflet pesa bastante: solo se descarga cuando hay radar que mostrar.
@@ -184,15 +186,20 @@ export default function App({ controladorPwa = null }: { controladorPwa?: Contro
     [resultado, mezcla, ahoraMs, verificacion.calibracion],
   );
 
-  const horasVerificadasEnCurso = useMemo(() => {
+  const horizonteH = useMemo(() => {
     if (!resultado) {
       return null;
     }
-    const horizonteH = horizonteDe(
+    return horizonteDe(
       (Date.parse(resultado.horasUtc[horaEnCurso]) - ahoraMs) / MS_HORA,
     );
-    return horizonteH === null ? null : (verificacion.calibracion[horizonteH]?.n ?? null);
-  }, [resultado, horaEnCurso, ahoraMs, verificacion.calibracion]);
+  }, [resultado, horaEnCurso, ahoraMs]);
+  const horasVerificadasEnCurso = horizonteH === null
+    ? null : (verificacion.calibracion[horizonteH]?.n ?? null);
+  const progreso = useMemo(
+    () => progresoAprendizaje(verificacion.resumen, verificacion.disponible, horizonteH),
+    [verificacion.resumen, verificacion.disponible, horizonteH],
+  );
 
   const resumen = useMemo(
     () => resultado && mezcla && popMostrada ? resumirCielo({
@@ -274,7 +281,15 @@ export default function App({ controladorPwa = null }: { controladorPwa?: Contro
             cargando={verificacion.resumen === null}
             registrarObservacionUsuario={verificacion.registrarObservacionUsuario}
           />
-          <PanelExactitud
+          <Aprendizaje progreso={progreso} observaciones={verificacion.resumen?.observaciones ?? null}
+            panel={{
+              resumen: verificacion.resumen,
+              disponible: verificacion.disponible,
+              exportar: verificacion.exportar,
+              importar: verificacion.importar,
+              borrar: verificacion.borrar,
+            }} />
+          <GestionHistorial
             resumen={verificacion.resumen}
             disponible={verificacion.disponible}
             exportar={verificacion.exportar}

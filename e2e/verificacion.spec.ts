@@ -130,6 +130,7 @@ test.describe('Fase 3: verificación y calibración local', () => {
     );
     const mostrado = Number.parseInt((await page.getByTestId('pop-ahora').textContent()) ?? '', 10);
     expect(mostrado).toBe(10);
+    await page.getByRole('button', { name: 'Ver detalle de exactitud' }).click();
     await expect(page.getByRole('cell', { name: 'Calibrado', exact: true })).toBeVisible();
     await expect
       .poll(async () =>
