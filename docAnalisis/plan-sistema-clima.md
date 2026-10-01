@@ -100,7 +100,8 @@ docAnalisis/analisis-sistema-clima.md, docAnalisis/flujo-ramas.md
 - **Fase 2: nowcast con radar** (RainViewer, dBZ, movimiento, mezcla) y mapa de radar. El esquema de color 0 (dBZ en grises) se verifica al empezar; si no sirve, se decodifica con tabla de la paleta.
 - **Fase 3: verificación y calibración local** (log, botón "¿Está lloviendo?", Brier/confiabilidad, isotónica, export/import).
 - **Fase 4: PWA instalable** (manifest + service worker para el shell offline).
-- **Fase 5 (opcional): Google Weather.** Adapter detrás de `VITE_GOOGLE_WEATHER_KEY`, que se captura en "Variables de entorno" de Hostinger. La llave va restringida por dominio y con tope diario en GCP. Se compara en el Panel de Exactitud durante 2–4 semanas y luego se decide.
+- **Fase 5: UX/UI (Opción B · Cielo).** Rediseño completo de la interfaz: mensaje de acción en la pantalla principal ("Lleva paraguas."), horas como píldoras, tarjeta de radar con leyenda, exactitud como detalle secundario, modo oscuro automático, tipografías autoalojadas y columna centrada en escritorio. Se entrega en dos partes: la **entrega A** (huso horario y lógica pura) y la **entrega B** (interfaz), que arranca tras aprobar las maquetas completas.
+- **Fase 6 (opcional): Google Weather.** Adapter detrás de `VITE_GOOGLE_WEATHER_KEY`, que se captura en "Variables de entorno" de Hostinger. La llave va restringida por dominio y con tope diario en GCP. Se compara en el Panel de Exactitud durante 2–4 semanas y luego se decide.
 
 ---
 
@@ -132,6 +133,13 @@ docAnalisis/analisis-sistema-clima.md, docAnalisis/flujo-ramas.md
   - **No verificado todavía:** la instalación en un dispositivo real y el comportamiento bajo las cabeceras de Hostinger, porque el primer deploy sigue pospuesto. La instalabilidad solo se comprobó en Chromium (`Page.getInstallabilityErrors` sobre `vite preview`); Safari y Firefox no se probaron.
   - La Fase 4 llegó a `master` (PR #10, `develop → master`) antes de pasar por la corrida E2E visible. Esa primera corrida dio 21/22: la prueba de instalabilidad recibía `in-incognito`, error propio del contexto *off-the-record* de Playwright con ventana, que el modo headless no reportaba. Se corrigió en `bugfix/bug-e2e-instalabilidad-incognito` (PR #11), tolerando solo ese `errorId`.
   - VoBo (2026-09-30): el usuario dio su VoBo tras la corrida E2E visible `2026-09-30_1954_e36c93b` (22/22 aprobadas, con `slowMo` aplicado; 17 previas y 5 nuevas de PWA).
+- **Fase 5 (UX/UI), entrega A, 2026-10-01:** implementada en `develop`. La preparación del rediseño destapó un defecto de la Fase 1 y dejó listas las piezas lógicas:
+  - **Defecto corregido: las horas se mostraban en UTC.** El complemento horario se pedía con `timezone: 'UTC'` y la API responde `"timezone":"GMT"`, así que `formatHoraLocal` recibía `GMT` (a las 20:36 de Ciudad de México la app habría dicho "de 02:00 a 03:00 h"). Ninguna prueba lo detectó porque los fixtures devolvían `America/Mexico_City`; el plan original decía `timezone=auto`.
+  - **Arreglo:** ambos endpoints se piden con `timezone=auto&timeformat=unixtime` (verificado con la API real: enteros epoch UTC, el mismo eje horario en los dos endpoints y la zona IANA del punto, p. ej. `America/Tijuana`). Con epoch no hay conversión hora local → UTC, que sería ambigua en los cambios de horario de verano. La zona sale del ensamble (fuente obligatoria), con respaldo al complemento y luego a Ciudad de México; la clave de caché pasó a `pop:v2` para descartar entradas viejas con `GMT`.
+  - **Blindaje:** pruebas que fallan si la petición vuelve a `timezone=UTC`, una prueba de App con el reloj congelado (CDMX muestra 20:00–21:00; Tijuana 19:00–20:00) y dos `@vivo` contra la API real (CDMX, Tijuana y Cancún: zona, desfase, paso de 3600 s y serie que arranca a las 00:00 locales).
+  - **Lógica pura nueva, sin cambio visual:** nivel y mensaje de lluvia en 4 niveles sobre el porcentaje mostrado (≥60 % "Lleva paraguas." · 30–59 % · 10–29 % · <10 %), frase de la tendencia ("Baja a menos de 10 % desde las 22:00."), chip de radar, etiquetas de día, píldoras de próximas horas y progreso de aprendizaje.
+  - **Herramienta de auditoría visual:** `pnpm capturas` genera 72 capturas (12 estados × 3 anchos × claro/oscuro) contra el build real; el documento `docAnalisis/ux-contratos-de-prueba.md` reúne lo que las pruebas esperan de la interfaz.
+  - **Pendiente:** la entrega B (interfaz). Las maquetas completas (4 estados de cielo, modo oscuro, escritorio y estados de pantalla) se aprueban antes de implementarla.
 
 **Preparación (una sola vez; el 2026-09-24 se confirmó que el repo existe y está vacío):**
 1. Volver a correr `gh repo view Octavillt/pronosticoClimaLluvia` justo antes del primer push, para confirmar que sigue vacío.

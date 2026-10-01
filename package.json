@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:report": "node scripts/run-pruebas.mjs unitarias",
     "test:e2e": "node scripts/run-pruebas.mjs e2e",
-    "test:e2e:headed": "node scripts/run-pruebas.mjs e2e --headed"
+    "test:e2e:headed": "node scripts/run-pruebas.mjs e2e --headed",
+    "capturas": "playwright test -c scripts/capturas/playwright.config.ts"
   },
   "engines": {
     "node": ">=22"

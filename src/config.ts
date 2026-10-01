@@ -61,5 +61,18 @@ export const config = {
     /** Días que se conservan predicciones y observaciones; lo más viejo se purga al abrir la app. */
     retencionDias: 90,
   },
+  ui: {
+    /** Porcentaje mostrado a partir del cual la lluvia se considera alta, media o baja. */
+    umbralesPorcentaje: { alta: 60, media: 30, baja: 10 },
+    /** Peso del radar a partir del cual se dice que interviene en la PoP mostrada. */
+    pesoRadarVisible: 0.05,
+    /** Horas que cubre la tira de píldoras de próximas horas de la pantalla principal. */
+    horasPildoras: 24,
+    /** Ventana de horas que examina la frase que busca lluvia en lo que viene. */
+    horasBusquedaFrase: 24,
+    /** Horas seguidas bajo el umbral bajo (10 %) exigidas para afirmar
+     * que la lluvia "baja a menos de 10 %". */
+    horasSostenidasParaBajar: 2,
+  },
   googleWeatherKey: import.meta.env.VITE_GOOGLE_WEATHER_KEY ?? '',
 } as const;
