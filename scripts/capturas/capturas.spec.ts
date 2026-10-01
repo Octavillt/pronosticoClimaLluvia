@@ -262,8 +262,7 @@ for (const estado of ESTADOS) {
         await page.goto('/');
         await esperarEstado(page, estado);
         if (estado === 'radar-lluvia') {
-          await expect(page.locator('time[datetime="2026-10-01T02:00:00.000Z"]')).toHaveText('20:00');
-          await expect(page.locator('time[datetime^="2026-10-01T03:00"]')).toHaveText('21:00 h');
+          await expect(page.locator('.cielo__hora')).toHaveText('Ahora · 20:00 a 21:00 h');
         }
         const captura = await page.screenshot({ path: join(DIRECTORIO, `${nombre}.png`), fullPage: true });
         if (estado === 'radar-lluvia') {
