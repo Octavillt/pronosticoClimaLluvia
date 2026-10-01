@@ -1,0 +1,221 @@
+/* Pantallas sin pronóstico: marca, esqueleto de carga, alertas y buscador de ciudades. */
+
+.encabezado {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.encabezado__logo {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radio-completo);
+  background: var(--color-cielo);
+  color: var(--color-sobre-cielo);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.encabezado__titulo {
+  margin: 0;
+  font-family: var(--fuente-titulos);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.estado {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+}
+
+.estado__texto {
+  margin: 0;
+  font-size: 16px;
+  line-height: 24px;
+  color: var(--color-texto-suave);
+}
+
+.estado__mensaje {
+  margin: 0;
+  font-size: 16px;
+  line-height: 22px;
+  color: var(--color-texto-suave);
+}
+
+.estado__boton {
+  width: 100%;
+}
+
+.estado__alerta {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: var(--espacio-4);
+  border-radius: 20px;
+  background: var(--color-error-fondo);
+  color: var(--color-error-texto);
+}
+
+.estado__alerta-icono {
+  flex-shrink: 0;
+}
+
+.estado__alerta-titulo {
+  font-size: 16px;
+  line-height: 22px;
+  font-weight: 700;
+}
+
+.estado__alerta-detalle {
+  margin-top: 2px;
+  font-size: 14px;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+/* Esqueleto de la carga inicial: mismo bloque azul que el cielo, con relleno en lugar de datos. */
+.esqueleto__relleno {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: var(--espacio-4);
+}
+
+.esqueleto__barra {
+  display: block;
+  max-width: 100%;
+  background: var(--color-cielo-chip);
+}
+
+.esqueleto__barra--hora {
+  height: 20px;
+  width: 150px;
+  border-radius: 10px;
+}
+
+.esqueleto__barra--numero {
+  height: 104px;
+  width: 190px;
+  border-radius: 24px;
+}
+
+.esqueleto__barra--mensaje {
+  height: 34px;
+  width: 260px;
+  border-radius: 12px;
+}
+
+.esqueleto__barra--frase {
+  height: 20px;
+  width: 230px;
+  border-radius: 10px;
+}
+
+.esqueleto__barra--chip {
+  height: 40px;
+  width: 210px;
+  border-radius: 20px;
+}
+
+.esqueleto__pildoras {
+  display: flex;
+  gap: var(--espacio-2);
+  overflow: hidden;
+}
+
+.esqueleto__pildora {
+  flex: none;
+  width: 72px;
+  height: 152px;
+  border-radius: var(--radio-pildora);
+  background: var(--color-pista);
+}
+
+/* Buscador de ciudades. */
+.buscador {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-3);
+}
+
+.buscador__titulo {
+  margin: 0;
+  font-family: var(--fuente-titulos);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.buscador__form {
+  display: flex;
+  gap: var(--espacio-2);
+}
+
+.buscador__campo {
+  flex: 1;
+  min-width: 0;
+  height: 52px;
+  padding: 0 20px;
+  border-radius: var(--radio-control);
+  border: 1.5px solid var(--color-linea-control);
+  background: var(--color-tarjeta);
+  color: var(--color-texto);
+  font: inherit;
+  font-size: 16px;
+}
+
+.buscador__campo::placeholder {
+  color: var(--color-texto-suave);
+}
+
+.buscador__enviar {
+  flex: none;
+  padding: 0 22px;
+}
+
+.buscador__error {
+  margin: 0;
+  padding: var(--espacio-2) var(--espacio-3);
+  border-radius: 12px;
+  background: var(--color-error-fondo);
+  color: var(--color-error-texto);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.buscador__lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-2);
+}
+
+.buscador__resultado {
+  width: 100%;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-2);
+  padding: 0 18px;
+  border-radius: 18px;
+  border: 1px solid var(--color-linea);
+  background: var(--color-tarjeta);
+  color: var(--color-texto);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.buscador__chevron {
+  flex-shrink: 0;
+  color: var(--color-texto-suave);
+}

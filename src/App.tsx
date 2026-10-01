@@ -1,5 +1,4 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
-import { config } from './config';
 import type {
   EstadoRadar,
   GeoPoint,
@@ -18,13 +17,16 @@ import { useEnLinea } from './pwa/useEnLinea';
 import { AvisoActualizacion } from './ui/AvisoActualizacion';
 import { Aprendizaje } from './ui/Aprendizaje';
 import { AvisoSinConexion } from './ui/AvisoSinConexion';
-import { BuscadorCiudad } from './ui/BuscadorCiudad';
 import { BotonLluvia } from './ui/BotonLluvia';
 import { Cielo } from './ui/Cielo';
+import { Encabezado } from './ui/Encabezado';
+import { ErrorPronostico } from './ui/ErrorPronostico';
+import { EsqueletoCielo } from './ui/EsqueletoCielo';
 import { EstadoFuentes } from './ui/EstadoFuentes';
 import { GestionHistorial } from './ui/GestionHistorial';
 import { ProximasHoras } from './ui/ProximasHoras';
 import { RadarEsqueleto } from './ui/RadarEsqueleto';
+import { SinUbicacion } from './ui/SinUbicacion';
 import { RadarEstado } from './ui/RadarEstado';
 import { useVerificacion } from './ui/useVerificacion';
 import { indiceHoraEnCurso, MS_HORA } from './utils/horas';
@@ -50,6 +52,7 @@ export default function App({ controladorPwa = null }: { controladorPwa?: Contro
     null,
   );
   const [mensajeError, setMensajeError] = useState<string | null>(null);
+  const [ubicacionFallida, setUbicacionFallida] = useState(false);
   const [radar, setRadar] = useState<EstadoRadar>({ estado: 'cargando' });
   const [nowcast, setNowcast] = useState<Nowcast | null>(null);
   const [indiceRadar, setIndiceRadar] = useState<IndiceRadar | null>(null);
@@ -58,6 +61,7 @@ export default function App({ controladorPwa = null }: { controladorPwa?: Contro
   const cargar = useCallback(async (destino: GeoPoint, nombre: string | null) => {
     setFase('solicitando');
     setMensajeError(null);
+    setUbicacionFallida(false);
     setNowcast(null);
     setIndiceRadar(null);
     setPunto(destino);
@@ -77,15 +81,19 @@ export default function App({ controladorPwa = null }: { controladorPwa?: Contro
   }, []);
 
   const usarGeolocalizacion = useCallback(() => {
-    if (!navigator.geolocation) {
+    const sinUbicacion = () => {
+      setUbicacionFallida(true);
       setFase('sin-ubicacion');
+    };
+    if (!navigator.geolocation) {
+      sinUbicacion();
       return;
     }
     setFase('solicitando');
     navigator.geolocation.getCurrentPosition(
       (posicion) =>
         void cargar({ lat: posicion.coords.latitude, lon: posicion.coords.longitude }, null),
-      () => setFase('sin-ubicacion'),
+      sinUbicacion,
     );
   }, [cargar]);
 
@@ -221,25 +229,28 @@ export default function App({ controladorPwa = null }: { controladorPwa?: Contro
         onActualizar={() => controladorPwa?.activar()}
       />
       <AvisoSinConexion enLinea={enLinea} />
-      {fase !== 'listo' && <h1>{config.appName}</h1>}
-
-      {fase === 'solicitando' && <p role="status">Obteniendo pronóstico…</p>}
+      {fase === 'solicitando' && <EsqueletoCielo />}
 
       {(fase === 'sin-ubicacion' || fase === 'fuera-mexico') && (
         <>
-          {fase === 'fuera-mexico' && (
-            <p role="alert">Esta ubicación está fuera de México. Elige una ciudad mexicana.</p>
-          )}
-          <button onClick={usarGeolocalizacion}>Usar mi ubicación</button>
-          <BuscadorCiudad onElegir={(p, nombre) => void cargar(p, nombre)} />
+          <Encabezado />
+          <SinUbicacion
+            fueraDeMexico={fase === 'fuera-mexico'}
+            ubicacionFallida={ubicacionFallida}
+            onUsarUbicacion={usarGeolocalizacion}
+            onElegir={(p, nombre) => void cargar(p, nombre)}
+          />
         </>
       )}
 
       {fase === 'error' && (
-        <section>
-          <p role="alert">No se pudo obtener el pronóstico: {mensajeError}</p>
-          <button onClick={() => punto && void cargar(punto, nombreLugar)}>Reintentar</button>
-        </section>
+        <>
+          <Encabezado />
+          <ErrorPronostico
+            mensaje={mensajeError ?? ''}
+            onReintentar={() => punto && void cargar(punto, nombreLugar)}
+          />
+        </>
       )}
 
       {fase === 'listo' && resultado && mezcla && popMostrada && punto && resumen && (
@@ -249,7 +260,10 @@ export default function App({ controladorPwa = null }: { controladorPwa?: Contro
             nombre={nombreLugar}
             resumen={resumen}
             horasVerificadas={horasVerificadasEnCurso}
-            onCambiar={() => setFase('sin-ubicacion')}
+            onCambiar={() => {
+              setUbicacionFallida(false);
+              setFase('sin-ubicacion');
+            }}
           />
           <ProximasHoras
             horasUtc={resultado.horasUtc}

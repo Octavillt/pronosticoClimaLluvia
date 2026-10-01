@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { CiudadEncontrada, GeoPoint } from '../domain/types';
 import { buscarCiudad } from '../providers/geocoding';
+import './Estados.css';
 
 interface Props {
   onElegir: (punto: GeoPoint, nombre: string) => void;
@@ -32,31 +33,51 @@ export function BuscadorCiudad({ onElegir }: Props) {
   }
 
   return (
-    <section aria-label="Buscar ciudad">
-      <h2>Busca tu ciudad</h2>
+    <section aria-label="Buscar ciudad" className="buscador">
+      <h2 className="buscador__titulo">Busca tu ciudad</h2>
       <form
+        className="buscador__form"
         onSubmit={(e) => {
           e.preventDefault();
           void buscar();
         }}
       >
         <input
+          className="buscador__campo"
           aria-label="Nombre de la ciudad"
           value={texto}
           onChange={(e) => setTexto(e.target.value)}
           placeholder="Ej. Guadalajara"
         />
-        <button type="submit" disabled={buscando}>
+        <button type="submit" className="boton boton--primario buscador__enviar" disabled={buscando}>
+          <svg
+            width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+            strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="6" />
+            <path d="M16 16l4 4" />
+          </svg>
           {buscando ? 'Buscando…' : 'Buscar'}
         </button>
       </form>
-      {error && <p role="alert">{error}</p>}
-      <ul>
+      {error && <p className="buscador__error" role="alert">{error}</p>}
+      <ul className="buscador__lista">
         {resultados.map((c) => (
           <li key={`${c.lat},${c.lon}`}>
-            <button onClick={() => onElegir({ lat: c.lat, lon: c.lon }, c.nombre)}>
+            <button
+              type="button"
+              className="buscador__resultado"
+              onClick={() => onElegir({ lat: c.lat, lon: c.lon }, c.nombre)}
+            >
               {c.nombre}
               {c.estado ? `, ${c.estado}` : ''}
+              <svg
+                className="buscador__chevron" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M9 5l7 7-7 7" />
+              </svg>
             </button>
           </li>
         ))}
