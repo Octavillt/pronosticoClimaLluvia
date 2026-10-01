@@ -5,19 +5,22 @@ import { config } from '../config';
 import type { GeoPoint, IndiceRadar } from '../domain/types';
 import { plantillaTilesMapa } from '../providers/rainviewer';
 import { formatHoraLocal } from '../utils/localTime';
+import './Radar.css';
+import './MapaRadar.css';
 
 interface Props {
   punto: GeoPoint;
   nombre: string | null;
   indice: IndiceRadar;
   timezone: string;
+  ahoraMs?: number;
 }
 
 const OPACIDAD_RADAR = 0.7;
 const PASO_ANIMACION_MS = 700;
 const ZOOM_MAPA_MAXIMO = 10;
 
-export default function MapaRadar({ punto, nombre, indice, timezone }: Props) {
+export default function MapaRadar({ punto, nombre, indice, timezone, ahoraMs = Date.now() }: Props) {
   const contenedor = useRef<HTMLDivElement>(null);
   const capas = useRef(new Map<string, TileLayer>());
   const [mapa, setMapa] = useState<MapaLeaflet | null>(null);
@@ -41,13 +44,29 @@ export default function MapaRadar({ punto, nombre, indice, timezone }: Props) {
       maxZoom: ZOOM_MAPA_MAXIMO,
       scrollWheelZoom: false,
     });
-    tileLayer(config.urls.mapaBase, { maxZoom: 19, attribution: '© OpenStreetMap' }).addTo(nuevo);
+    tileLayer(config.urls.mapaBase, {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap',
+      className: 'mapa-radar__base',
+    }).addTo(nuevo);
     circleMarker([punto.lat, punto.lon], {
-      radius: 7,
-      color: '#ffffff',
+      radius: 17,
       weight: 2,
-      fillColor: '#dc2626',
-      fillOpacity: 1,
+      fill: false,
+      interactive: false,
+      className: 'mapa-radar__marcador-halo',
+    }).addTo(nuevo);
+    circleMarker([punto.lat, punto.lon], {
+      radius: 9,
+      weight: 0,
+      interactive: false,
+      className: 'mapa-radar__marcador-borde',
+    }).addTo(nuevo);
+    circleMarker([punto.lat, punto.lon], {
+      radius: 5,
+      weight: 0,
+      interactive: false,
+      className: 'mapa-radar__marcador-centro',
     })
       .bindTooltip(nombre ?? 'Tu ubicación')
       .addTo(nuevo);
@@ -107,16 +126,27 @@ export default function MapaRadar({ punto, nombre, indice, timezone }: Props) {
     return null;
   }
   const hora = formatHoraLocal(new Date(frameActual.tiempoS * 1000).toISOString(), timezone);
+  const ultimoFotogramaMs = frames[frames.length - 1].tiempoS * 1000;
+  const antiguedadMin = Math.max(1, Math.round((ahoraMs - ultimoFotogramaMs) / 60_000));
 
   return (
-    <section aria-label="Mapa de radar">
-      <h2>Radar</h2>
-      <div ref={contenedor} data-testid="mapa-radar" style={{ height: 360, width: '100%' }} />
-      <p>
-        <button onClick={() => setAnimando((a) => !a)} aria-pressed={animando}>
-          {animando ? 'Pausar' : 'Animar'}
-        </button>{' '}
+    <section className="tarjeta radar" aria-label="Mapa de radar">
+      <div className="radar__cabecera">
+        <h2 className="radar__titulo">Radar</h2>
+        <span className="radar__antiguedad">Hace {antiguedadMin} min</span>
+      </div>
+      <div className="radar__mapa" ref={contenedor} data-testid="mapa-radar" />
+      <div className="radar__controles">
+        <button
+          className="radar__animar" type="button" onClick={() => setAnimando((a) => !a)}
+          aria-label={animando ? 'Pausar' : 'Animar'} aria-pressed={animando}
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d={animando ? 'M7 5h4v14H7zM13 5h4v14h-4z' : 'M8 5.5v13l10.5-6.5z'} />
+          </svg>
+        </button>
         <input
+          className="radar__fotograma"
           type="range"
           aria-label="Fotograma del radar"
           min={0}
@@ -126,12 +156,13 @@ export default function MapaRadar({ punto, nombre, indice, timezone }: Props) {
             setAnimando(false);
             setManual(frames[Number(e.target.value)].ruta);
           }}
-        />{' '}
-        <time data-testid="hora-fotograma" dateTime={new Date(frameActual.tiempoS * 1000).toISOString()}>
+        />
+        <time className="radar__hora" data-testid="hora-fotograma"
+          dateTime={new Date(frameActual.tiempoS * 1000).toISOString()}>
           {hora} h
         </time>
-        {actual === frames.length - 1 && ' (más reciente)'}
-      </p>
+      </div>
+      {actual === frames.length - 1 && <p className="radar__reciente">(más reciente)</p>}
     </section>
   );
 }

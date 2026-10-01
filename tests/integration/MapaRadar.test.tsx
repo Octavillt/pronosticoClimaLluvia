@@ -105,4 +105,55 @@ describe('MapaRadar', () => {
     unmount();
     expect(document.querySelector('.leaflet-container')).toBeNull();
   });
+
+  test.each([[10, 'Hace 10 min'], [0, 'Hace 1 min']])(
+    'la antigüedad a %s minutos usa el último fotograma: %s', (minutos, texto) => {
+      const datos = indice();
+      const ahoraMs = datos.frames[2].tiempoS * 1000 + minutos * 60_000;
+      render(<MapaRadar punto={PUNTO} nombre={null} indice={datos}
+        timezone="America/Mexico_City" ahoraMs={ahoraMs} />);
+      expect(screen.getByText(texto)).toBeTruthy();
+      fireEvent.change(screen.getByLabelText('Fotograma del radar'), { target: { value: '0' } });
+      expect(screen.getByText(texto)).toBeTruthy();
+    },
+  );
+
+  test('el botón accesible cambia entre los íconos de reproducir y pausar', () => {
+    render(<MapaRadar punto={PUNTO} nombre={null} indice={indice()} timezone="America/Mexico_City" />);
+    const animar = screen.getByRole('button', { name: 'Animar' });
+    expect(animar.getAttribute('aria-pressed')).toBe('false');
+    expect(animar.querySelector('svg')?.getAttribute('aria-hidden')).toBe('true');
+    expect(animar.querySelector('path')?.getAttribute('d')).toBe('M8 5.5v13l10.5-6.5z');
+    fireEvent.click(animar);
+    const pausar = screen.getByRole('button', { name: 'Pausar' });
+    expect(pausar.getAttribute('aria-pressed')).toBe('true');
+    expect(pausar.querySelector('path')?.getAttribute('d')).toBe('M7 5h4v14H7zM13 5h4v14h-4z');
+    fireEvent.click(pausar);
+    expect(screen.getByRole('button', { name: 'Animar' }).getAttribute('aria-pressed')).toBe('false');
+  });
+
+  test('solo la base lleva la clase que permite el filtro oscuro', () => {
+    render(<MapaRadar punto={PUNTO} nombre={null} indice={indice()} timezone="America/Mexico_City" />);
+    expect(document.querySelector('.leaflet-tile-pane .mapa-radar__base')).not.toBeNull();
+    const radar = [...document.querySelectorAll<HTMLImageElement>('.leaflet-tile-pane img')]
+      .filter((tile) => tile.src.includes('/v2/radar/'));
+    expect(radar.length).toBeGreaterThan(0);
+    for (const tile of radar) {
+      expect(tile.closest('.mapa-radar__base')).toBeNull();
+    }
+  });
+
+  test('dibuja los tres marcadores con clases y deja la altura del mapa en CSS', () => {
+    render(<MapaRadar punto={PUNTO} nombre={null} indice={indice()} timezone="America/Mexico_City" />);
+    const mapa = screen.getByTestId('mapa-radar');
+    expect(mapa.classList.contains('leaflet-container')).toBe(true);
+    expect(mapa.style.height).toBe('');
+    for (const clase of ['halo', 'borde', 'centro']) {
+      expect(mapa.querySelectorAll(`.leaflet-overlay-pane path.mapa-radar__marcador-${clase}`))
+        .toHaveLength(1);
+    }
+    expect(screen.getAllByRole('region', { name: 'Mapa de radar' })).toHaveLength(1);
+    expect(screen.queryByRole('status')).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
 });

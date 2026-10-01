@@ -23,6 +23,7 @@ import { Cielo } from './ui/Cielo';
 import { EstadoFuentes } from './ui/EstadoFuentes';
 import { ProximasHoras } from './ui/ProximasHoras';
 import { PanelExactitud } from './ui/PanelExactitud';
+import { RadarEsqueleto } from './ui/RadarEsqueleto';
 import { useVerificacion } from './ui/useVerificacion';
 import { indiceHoraEnCurso, MS_HORA } from './utils/horas';
 import { resumirCielo } from './utils/mensajeCielo';
@@ -250,6 +251,17 @@ export default function App({ controladorPwa = null }: { controladorPwa?: Contro
             ahoraMs={ahoraMs}
             timezone={resultado.timezone}
           />
+          {radar.estado === 'ok' && indiceRadar && (
+            <Suspense fallback={<RadarEsqueleto />}>
+              <MapaRadar
+                punto={punto}
+                nombre={nombreLugar}
+                indice={indiceRadar}
+                timezone={resultado.timezone}
+                ahoraMs={ahoraMs}
+              />
+            </Suspense>
+          )}
           <BotonLluvia
             key={`${punto.lat}|${punto.lon}`}
             disponible={verificacion.disponible}
@@ -257,16 +269,6 @@ export default function App({ controladorPwa = null }: { controladorPwa?: Contro
             cargando={verificacion.resumen === null}
             registrarObservacionUsuario={verificacion.registrarObservacionUsuario}
           />
-          {radar.estado === 'ok' && indiceRadar && (
-            <Suspense fallback={<p role="status">Cargando mapa del radar…</p>}>
-              <MapaRadar
-                punto={punto}
-                nombre={nombreLugar}
-                indice={indiceRadar}
-                timezone={resultado.timezone}
-              />
-            </Suspense>
-          )}
           <PanelExactitud
             resumen={verificacion.resumen}
             disponible={verificacion.disponible}

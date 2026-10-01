@@ -1,0 +1,84 @@
+.radar {
+  padding: var(--espacio-3);
+  overflow: hidden;
+}
+
+.radar__cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 28px;
+}
+
+.radar__titulo {
+  font-family: var(--fuente-titulos);
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.radar__antiguedad {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  padding: var(--espacio-1) 10px;
+  border-radius: var(--radio-completo);
+  background: var(--color-accion-suave);
+  color: var(--color-accion-texto);
+}
+
+.radar__mapa,
+.radar__esqueleto {
+  margin-top: 10px;
+  height: 210px;
+  border-radius: 16px;
+  overflow: hidden;
+  isolation: isolate;
+  width: 100%;
+}
+
+.radar__esqueleto {
+  background: var(--color-pista);
+}
+
+.radar__controles {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.radar__animar {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--color-cielo);
+  color: var(--color-sobre-cielo);
+  border: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.radar__fotograma {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  accent-color: var(--color-primario);
+  height: 44px;
+}
+
+.radar__hora {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.radar__reciente {
+  font-size: 12px;
+  color: var(--color-texto-suave);
+  margin: var(--espacio-1) 0 0;
+  text-align: right;
+}
