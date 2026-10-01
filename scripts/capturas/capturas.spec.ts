@@ -1,6 +1,7 @@
 /**
  * Uso: pnpm capturas; CAPTURAS_ETIQUETA=antes pnpm capturas;
- * CAPTURAS_FILTRO='listo-alta__390' pnpm capturas; CAPTURAS_ANCHOS=360,768 pnpm capturas.
+ * CAPTURAS_FILTRO='listo-alta__390' pnpm capturas; CAPTURAS_ANCHOS=360,768 pnpm capturas;
+ * CAPTURAS_OSM_REAL=1 pnpm capturas usa los tiles reales del mapa base.
  * PNG en reportes/.tmp/capturas/<etiqueta>/; reportes/.tmp está ignorado por git.
  */
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
@@ -41,6 +42,8 @@ const DIRECTORIO = join(
   fileURLToPath(new URL('../../reportes/.tmp/capturas/', import.meta.url)),
   process.env.CAPTURAS_ETIQUETA ?? 'actual',
 );
+// Con CAPTURAS_OSM_REAL=1 el mapa base usa tiles reales de OpenStreetMap (requiere internet).
+const OSM_REAL = process.env.CAPTURAS_OSM_REAL === '1';
 const FILTRO = process.env.CAPTURAS_FILTRO ? new RegExp(process.env.CAPTURAS_FILTRO) : null;
 
 function tormentaSobreElPunto(sinCobertura: boolean): EscenaRadar {
@@ -76,11 +79,12 @@ async function prepararUbicacion(page: Page, context: BrowserContext, estado: Es
 }
 
 async function conProveedores(page: Page, estado: Estado): Promise<void> {
-  await page.route('**/*', (ruta) =>
-    new URL(ruta.request().url()).origin === 'http://localhost:4174'
-      ? ruta.continue()
-      : ruta.abort(),
-  );
+  await page.route('**/*', (ruta) => {
+    const { origin, hostname } = new URL(ruta.request().url());
+    const permitido = origin === 'http://localhost:4174'
+      || (OSM_REAL && hostname.endsWith('tile.openstreetmap.org'));
+    return permitido ? ruta.continue() : ruta.abort();
+  });
   await page.route('**/ensemble-api.open-meteo.com/**', async (ruta) => {
     if (estado === 'solicitando') {
       await new Promise<void>((resolve) => setTimeout(resolve, 4_000));
@@ -128,9 +132,11 @@ async function conProveedores(page: Page, estado: Estado): Promise<void> {
       body: codificarPng(tile.ancho, tile.alto, tile.data),
     });
   });
-  await page.route('**/tile.openstreetmap.org/**', (ruta) =>
-    ruta.fulfill({ contentType: 'image/png', body: TILE_BASE }),
-  );
+  if (!OSM_REAL) {
+    await page.route('**/tile.openstreetmap.org/**', (ruta) =>
+      ruta.fulfill({ contentType: 'image/png', body: TILE_BASE }),
+    );
+  }
   await page.route('**/geocoding-api.open-meteo.com/**', (ruta) =>
     ruta.fulfill({
       json: {
