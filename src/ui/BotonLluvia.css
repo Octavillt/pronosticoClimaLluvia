@@ -31,7 +31,7 @@
   flex: 1 1 150px;
   min-height: 52px;
   height: auto;
-  padding: var(--espacio-2) var(--espacio-3);
+  padding: var(--espacio-2) 6px;
 }
 
 .lluvia__mensaje {

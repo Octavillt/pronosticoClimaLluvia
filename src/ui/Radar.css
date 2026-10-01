@@ -207,3 +207,11 @@
 .radar__advertencia {
   flex-shrink: 0;
 }
+
+/* Con más ancho el mapa gana altura. */
+@media (min-width: 600px) {
+  .radar__mapa,
+  .radar__esqueleto {
+    height: 260px;
+  }
+}

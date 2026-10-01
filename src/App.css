@@ -18,3 +18,10 @@
   color: var(--color-texto-suave);
   margin: 0;
 }
+
+/* Pantallas anchas: columna centrada de 560 px sobre el fondo liso, con aire arriba. */
+@media (min-width: 600px) {
+  .app {
+    padding-top: var(--espacio-6);
+  }
+}

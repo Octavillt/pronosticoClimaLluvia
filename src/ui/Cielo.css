@@ -186,3 +186,10 @@
   line-height: 18px;
   color: var(--color-sobre-cielo-suave);
 }
+
+/* En pantallas anchas el cielo es una tarjeta redondeada por las cuatro esquinas. */
+@media (min-width: 600px) {
+  .cielo {
+    border-radius: var(--radio-cielo);
+  }
+}
