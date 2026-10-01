@@ -58,7 +58,7 @@ async function esperarControl(page: Page) {
 }
 
 test.describe('Fase 4: PWA instalable', () => {
-  test('el manifest y los íconos se descargan y Chromium no reporta errores de instalabilidad', async ({
+  test('el manifest y los íconos se descargan sin errores de instalabilidad propios de la app', async ({
     page,
     context,
     request,
@@ -99,7 +99,12 @@ test.describe('Fase 4: PWA instalable', () => {
     try {
       await cdp.send('Page.enable');
       await cdp.send('Page.getAppManifest');
-      await expect.poll(async () => (await cdp.send('Page.getInstallabilityErrors')).installabilityErrors, {
+      // Los contextos de Playwright son off-the-record: Chromium con ventana reporta in-incognito.
+      // Esa restricción del contexto de prueba no es un defecto de instalabilidad de la app.
+      await expect.poll(async () => {
+        const { installabilityErrors: errores } = await cdp.send('Page.getInstallabilityErrors');
+        return errores.filter((error) => error.errorId !== 'in-incognito').map((error) => error.errorId);
+      }, {
         timeout: ESPERA_PWA_MS,
       }).toEqual([]);
     } finally {
