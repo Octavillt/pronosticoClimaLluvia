@@ -26,6 +26,7 @@ import { PanelExactitud } from './ui/PanelExactitud';
 import { UbicacionActual } from './ui/UbicacionActual';
 import { useVerificacion } from './ui/useVerificacion';
 import { indiceHoraEnCurso, MS_HORA } from './utils/horas';
+import './App.css';
 
 // Leaflet pesa bastante: solo se descarga cuando hay radar que mostrar.
 const MapaRadar = lazy(() => import('./ui/MapaRadar'));
@@ -193,7 +194,7 @@ export default function App({ controladorPwa = null }: { controladorPwa?: Contro
   }, [resultado, horaEnCurso, ahoraMs, verificacion.calibracion]);
 
   return (
-    <main style={{ fontFamily: 'system-ui, sans-serif', maxWidth: 720, margin: '0 auto', padding: 16 }}>
+    <main className="app">
       <AvisoActualizacion
         visible={hayActualizacion}
         onActualizar={() => controladorPwa?.activar()}
@@ -266,7 +267,7 @@ export default function App({ controladorPwa = null }: { controladorPwa?: Contro
             borrar={verificacion.borrar}
           />
           <EstadoFuentes fuentes={resultado.fuentes} radar={radar} timezone={resultado.timezone} />
-          <p style={{ fontSize: '0.8rem' }}>
+          <p className="app__creditos">
             Datos: Open-Meteo, radar de RainViewer y mapa © OpenStreetMap.
           </p>
         </>

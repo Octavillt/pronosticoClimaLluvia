@@ -1,0 +1,20 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espacio-4);
+  max-width: 560px;
+  margin-inline: auto;
+  padding: 0 var(--espacio-4) var(--espacio-6);
+  min-height: 100vh;
+}
+
+.app__sangrado {
+  margin-inline: calc(var(--espacio-4) * -1);
+}
+
+.app__creditos {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--color-texto-suave);
+  margin: 0;
+}
