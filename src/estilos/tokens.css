@@ -21,6 +21,13 @@
   --color-sol: #f5c451;
   --color-gota-sobre-cielo: #9cc3f0;
 
+  /* Ilustración fija del mapa. */
+  --color-mapa-fondo: #e7ecef;
+  --color-mapa-parque: #d4e6d8;
+  --color-mapa-agua: #cbddea;
+  --color-mapa-rejilla: #dce3e8;
+  --color-mapa-calle: #ffffff;
+
   /* Acciones y aprendizaje. */
   --color-primario: #1f5fae;
   --color-accion: #00704a;
@@ -76,6 +83,13 @@
     --color-nube-clara: #2b5fa3;
     --color-lluvia: #7fa9db;
     --color-sol: #e8b84a;
+
+    /* Ilustración fija del mapa. */
+    --color-mapa-fondo: #12202b;
+    --color-mapa-parque: #142a25;
+    --color-mapa-agua: #0e2336;
+    --color-mapa-rejilla: #1c2a36;
+    --color-mapa-calle: #2a3948;
 
     /* Acciones y aprendizaje. */
     --color-primario: #6fa8f0;

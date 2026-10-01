@@ -24,6 +24,7 @@ import { EstadoFuentes } from './ui/EstadoFuentes';
 import { ProximasHoras } from './ui/ProximasHoras';
 import { PanelExactitud } from './ui/PanelExactitud';
 import { RadarEsqueleto } from './ui/RadarEsqueleto';
+import { RadarEstado } from './ui/RadarEstado';
 import { useVerificacion } from './ui/useVerificacion';
 import { indiceHoraEnCurso, MS_HORA } from './utils/horas';
 import { resumirCielo } from './utils/mensajeCielo';
@@ -262,6 +263,9 @@ export default function App({ controladorPwa = null }: { controladorPwa?: Contro
                 avance={radar.estado === 'ok' ? radar.avance : null}
               />
             </Suspense>
+          )}
+          {(radar.estado === 'sin-cobertura' || radar.estado === 'desactualizado') && (
+            <RadarEstado estado={radar} />
           )}
           <BotonLluvia
             key={`${punto.lat}|${punto.lon}`}
